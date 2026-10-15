@@ -1,16 +1,16 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Pending from './pages/Pending';
-import AdminDashboard from './pages/AdminDashboard';
-import AdminMembers from './pages/AdminMembers';
-import AdminBirthdays from './pages/AdminBirthdays';
-import AdminAttendance from './pages/AdminAttendance';
-import AdminAssignments from './pages/AdminAssignments';
-import AdminExports from './pages/AdminExports';
-import MemberHome from './pages/MemberHome';
-import MemberProfile from './pages/MemberProfile';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import Pending from './pages/Pending'
+import AdminDashboard from './pages/AdminDashboard'
+import AdminMembers from './pages/AdminMembers'
+import AdminBirthdays from './pages/AdminBirthdays'
+import AdminAttendance from './pages/AdminAttendance'
+import AdminAssignments from './pages/AdminAssignments'
+import AdminExports from './pages/AdminExports'
+import MemberHome from './pages/MemberHome'
+import MemberProfile from './pages/MemberProfile'
+import RequireAuth from './auth/RequireAuth'
 
 function App() {
   return (
@@ -20,21 +20,21 @@ function App() {
         <Route path='/login' element={<Login />} />
         <Route path='/register' element={<Register />} />
         <Route path='/pending' element={<Pending />} />
-        
-        {/* Admin Routes */}
-        <Route path='/admin' element={<AdminDashboard />} />
-        <Route path='/admin/members' element={<AdminMembers />} />
-        <Route path='/admin/birthdays' element={<AdminBirthdays />} />
-        <Route path='/admin/attendance' element={<AdminAttendance />} />
-        <Route path='/admin/assignments' element={<AdminAssignments />} />
-        <Route path='/admin/exports' element={<AdminExports />} />
-        
-        {/* Member Routes */}
-        <Route path='/member' element={<MemberHome />} />
-        <Route path='/member/profile' element={<MemberProfile />} />
+
+        {/* Admin Routes (Protected) */}
+        <Route path='/admin' element={<RequireAuth adminOnly><AdminDashboard /></RequireAuth>} />
+        <Route path='/admin/members' element={<RequireAuth adminOnly><AdminMembers /></RequireAuth>} />
+        <Route path='/admin/birthdays' element={<RequireAuth adminOnly><AdminBirthdays /></RequireAuth>} />
+        <Route path='/admin/attendance' element={<RequireAuth adminOnly><AdminAttendance /></RequireAuth>} />
+        <Route path='/admin/assignments' element={<RequireAuth adminOnly><AdminAssignments /></RequireAuth>} />
+        <Route path='/admin/exports' element={<RequireAuth adminOnly><AdminExports /></RequireAuth>} />
+
+        {/* Member Routes (Protected) */}
+        <Route path='/member' element={<RequireAuth><MemberHome /></RequireAuth>} />
+        <Route path='/member/profile' element={<RequireAuth><MemberProfile /></RequireAuth>} />
       </Routes>
     </BrowserRouter>
-  );
+  )
 }
 
-export default App;
+export default App
