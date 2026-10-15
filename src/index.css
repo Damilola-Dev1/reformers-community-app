@@ -1,7 +1,10 @@
 @import 'tailwindcss';
-
+@import '@fontsource-variable/plus-jakarta-sans';
+@import '@fontsource-variable/fraunces';
 
 @theme {
+--font-sans: ‘Plus Jakarta Sans Variable’, ui-sans-serif, system-ui, sans-serif;
+--font-display: ‘Fraunces Variable’, ui-serif, Georgia, serif;
 --color-navy: #0b1b3a;
 --color-navy-soft: #14294f;
 --color-brand: #f97316;

@@ -6,9 +6,15 @@ export type Member = {
   phone: string;
   gender: 'male' | 'female';
   dateOfBirth: string;
-  address: string;
+  location: string;
+  maritalStatus: 'single' | 'married' | 'divorced' | 'widowed';
   occupation: string;
+  bornAgain: 'yes' | 'no';
+  holySpirit: 'yes' | 'no' | 'not-sure';
   howHeard: string;
+  expectations: string;
+  walkWithGod: string;
+  termsAcceptedAt: string;
   role: 'admin' | 'member';
   status: 'pending' | 'approved';
   createdAt: string;
