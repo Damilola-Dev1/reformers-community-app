@@ -145,12 +145,14 @@ function AdminDashboard() {
     return { value: percent + '%', note: 'Across ' + attendance.services + ' finalized ' + word }
   }, [loading, attendanceError, attendance])
 
-  const memberDates = useMemo(() => {
-    const dates: Date[] = []
+  const growthMembers = useMemo(() => {
+    const list: { date: Date; gender: string }[] = []
     people.forEach((p) => {
-      if (p.status === 'approved' && p.createdAt) dates.push(p.createdAt)
+      if (p.status === 'approved' && p.createdAt) {
+        list.push({ date: p.createdAt, gender: p.gender })
+      }
     })
-    return dates
+    return list
   }, [people])
 
   const firstName = profile?.fullName.split(' ')[0] ?? ''
@@ -197,7 +199,7 @@ function AdminDashboard() {
         </div>
 
         <div className='mt-6'>
-          <MemberGrowthChart dates={memberDates} loading={loading} />
+          <MemberGrowthChart members={growthMembers} loading={loading} />
         </div>
 
         <div className='mt-6'>
