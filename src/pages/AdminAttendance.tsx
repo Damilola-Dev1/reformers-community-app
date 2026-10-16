@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { addDoc, collection, doc, getDocs, query, serverTimestamp, setDoc, updateDoc, where, writeBatch } from 'firebase/firestore'
+import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase'
 import { settings } from '../config/settings'
 
@@ -46,6 +46,136 @@ function TotalCard({ label, value, note }: { label: string; value: string; note?
       <p className='font-display text-2xl font-semibold text-navy mt-1'>{value}</p>
       {note && <p className='text-xs text-gray-400 mt-1'>{note}</p>}
     </div>
+  )
+}
+
+function checkMeetingLink(value: string): string {
+  if (value === '') return ''
+  if (!value.startsWith('https://')) {
+    return 'The link must start with https://'
+  }
+  try {
+    const url = new URL(value)
+    if (url.protocol !== 'https:' || !url.hostname.includes('.')) {
+      return 'Enter a real web address, for example https://meet.google.com/abc-defg-hij'
+    }
+  } catch {
+    return 'Enter a real web address, for example https://meet.google.com/abc-defg-hij'
+  }
+  return ''
+}
+
+function MeetingLinkCard() {
+  const [link, setLink] = useState('')
+  const [savedLink, setSavedLink] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [formError, setFormError] = useState('')
+  const [message, setMessage] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const snap = await getDoc(doc(db, 'communitySettings', settings.communityId))
+        if (snap.exists()) {
+          const value = snap.data().meetingLink
+          const text = typeof value === 'string' ? value : ''
+          setLink(text)
+          setSavedLink(text)
+        }
+      } catch (err) {
+        console.error(err)
+        setLoadError('Could not load the meeting link. Check your connection and refresh.')
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [])
+
+  async function handleSave(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setFormError('')
+    setMessage('')
+
+    const clean = link.trim()
+    const problem = checkMeetingLink(clean)
+    if (problem !== '') {
+      setFormError(problem)
+      return
+    }
+
+    setSaving(true)
+    try {
+      await setDoc(
+        doc(db, 'communitySettings', settings.communityId),
+        {
+          communityId: settings.communityId,
+          meetingLink: clean,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      )
+      setLink(clean)
+      setSavedLink(clean)
+      setMessage(clean === '' ? 'Meeting link cleared.' : 'Meeting link saved.')
+    } catch (err) {
+      console.error(err)
+      setFormError('Could not save the meeting link. Please try again.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSave} noValidate className='bg-white rounded-xl shadow p-4 mb-6'>
+      <h2 className='font-display text-xl font-semibold text-navy mb-1'>Meeting link</h2>
+      <p className='text-sm text-gray-500 mb-3'>
+        Members see this link only inside the app, after they tap Join.
+      </p>
+
+      {loading && <p className='text-gray-500 text-sm'>Loading...</p>}
+      {loadError && <p className='text-sm text-red-600 mb-3'>{loadError}</p>}
+
+      {!loading && !loadError && (
+        <div>
+          <label className='block text-sm font-medium text-navy mb-1'>Google Meet or WhatsApp link</label>
+          <input
+            value={link}
+            onChange={(e) => setLink(e.target.value)}
+            placeholder='https://meet.google.com/abc-defg-hij'
+            className='w-full rounded-lg border border-gray-300 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand'
+          />
+          <p className='text-xs text-gray-400 mt-1 mb-3'>
+            Examples: https://meet.google.com/abc-defg-hij or https://chat.whatsapp.com/yourgroupcode
+          </p>
+
+          {formError && <p className='text-sm text-red-600 mb-3'>{formError}</p>}
+          {message && <p className='text-sm text-green-700 mb-3'>{message}</p>}
+
+          <div className='flex items-center gap-3'>
+            <button
+              type='submit'
+              disabled={saving}
+              className='bg-brand hover:bg-brand-dark text-white font-semibold rounded-lg px-4 py-2 disabled:opacity-60'
+            >
+              {saving ? 'Saving...' : 'Save link'}
+            </button>
+            {savedLink !== '' && (
+              <a
+                href={savedLink}
+                target='_blank'
+                rel='noreferrer'
+                className='text-sm text-brand'
+              >
+                Test link
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+    </form>
   )
 }
 
@@ -433,6 +563,8 @@ function AdminAttendance() {
 
         <h1 className='font-display text-3xl font-semibold text-navy mt-2'>Attendance</h1>
         <p className='text-sm text-gray-500 mt-1 mb-6'>Create a service, then mark who was present</p>
+
+        <MeetingLinkCard />
 
         <form onSubmit={handleCreate} noValidate className='bg-white rounded-xl shadow p-4 mb-6'>
           <h2 className='font-display text-xl font-semibold text-navy mb-3'>New service</h2>

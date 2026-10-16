@@ -5,6 +5,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore'
 import { auth, db } from '../firebase'
 import { settings } from '../config/settings'
 import { useAuth } from '../auth/useAuth'
+import NextMeeting from '../components/NextMeeting'
 
 type Person = {
   id: string
@@ -178,6 +179,10 @@ function AdminDashboard() {
           <StatCard label='Males' value={show(stats.males)} note='Approved' />
           <StatCard label='Females' value={show(stats.females)} note='Approved' />
           <StatCard label='Attendance rate' value={attendanceCard.value} note={attendanceCard.note} />
+        </div>
+
+        <div className='mt-6'>
+          <NextMeeting />
         </div>
 
         <h2 className='font-display text-xl font-semibold text-navy mt-8 mb-3'>Manage</h2>
