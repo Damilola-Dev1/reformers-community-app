@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase'
 import { settings } from '../config/settings'
+import AttendanceChart from '../components/AttendanceChart'
 
 type Service = {
   id: string
@@ -599,6 +600,7 @@ function AdminAttendance() {
             {saving ? 'Creating...' : 'Create service'}
           </button>
         </form>
+        {!loading && !error && <AttendanceChart services={services} />}
 
         <h2 className='font-display text-xl font-semibold text-navy mb-3'>Services</h2>
 
