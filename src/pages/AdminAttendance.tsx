@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { addDoc, collection, doc, getDocs, query, serverTimestamp, setDoc, where } from 'firebase/firestore'
+import { addDoc, collection, doc, getDocs, query, serverTimestamp, setDoc, updateDoc, where, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase'
 import { settings } from '../config/settings'
 
@@ -39,13 +39,31 @@ function formatDate(value: string): string {
   })
 }
 
-function ServiceDetail({ service, onBack }: { service: Service; onBack: () => void }) {
+function TotalCard({ label, value, note }: { label: string; value: string; note?: string }) {
+  return (
+    <div className='bg-white rounded-xl shadow p-3'>
+      <p className='text-xs text-gray-500'>{label}</p>
+      <p className='font-display text-2xl font-semibold text-navy mt-1'>{value}</p>
+      {note && <p className='text-xs text-gray-400 mt-1'>{note}</p>}
+    </div>
+  )
+}
+
+type DetailProps = {
+  service: Service
+  onBack: () => void
+  onFinalizedChange: (id: string, value: boolean) => void
+}
+
+function ServiceDetail({ service, onBack, onFinalizedChange }: DetailProps) {
   const [people, setPeople] = useState<Person[]>([])
   const [marks, setMarks] = useState<Record<string, Status>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [actionError, setActionError] = useState('')
   const [busyId, setBusyId] = useState('')
+  const [confirm, setConfirm] = useState<'finalize' | 'reopen' | null>(null)
+  const [confirmBusy, setConfirmBusy] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -92,6 +110,24 @@ function ServiceDetail({ service, onBack }: { service: Service; onBack: () => vo
     return [...people].sort((a, b) => a.fullName.localeCompare(b.fullName))
   }, [people])
 
+  const totals = useMemo(() => {
+    let present = 0
+    let absent = 0
+    for (const p of people) {
+      const m = marks[p.id]
+      if (m === 'present') present += 1
+      else if (m === 'absent') absent += 1
+    }
+    const total = people.length
+    const notMarked = total - present - absent
+    const percent = total === 0 ? 0 : Math.round((present / total) * 100)
+    return { total, present, absent, notMarked, percent }
+  }, [people, marks])
+
+  function show(n: number): string {
+    return loading ? '...' : String(n)
+  }
+
   async function mark(memberId: string, status: Status) {
     if (service.finalized) return
     setActionError('')
@@ -115,6 +151,49 @@ function ServiceDetail({ service, onBack }: { service: Service; onBack: () => vo
     }
   }
 
+  async function handleConfirm() {
+    if (!confirm) return
+    setActionError('')
+    setConfirmBusy(true)
+
+    try {
+      if (confirm === 'finalize') {
+        const batch = writeBatch(db)
+        const newMarks: Record<string, Status> = {}
+        for (const p of people) {
+          if (!marks[p.id]) {
+            batch.set(doc(db, 'attendance', service.id + '_' + p.id), {
+              communityId: settings.communityId,
+              serviceId: service.id,
+              memberId: p.id,
+              status: 'absent',
+              markedBy: 'admin',
+              markedAt: serverTimestamp(),
+            })
+            newMarks[p.id] = 'absent'
+          }
+        }
+        batch.update(doc(db, 'services', service.id), {
+          finalized: true,
+          finalizedAt: serverTimestamp(),
+        })
+        await batch.commit()
+        setMarks((prev) => ({ ...prev, ...newMarks }))
+        onFinalizedChange(service.id, true)
+      } else {
+        await updateDoc(doc(db, 'services', service.id), { finalized: false })
+        onFinalizedChange(service.id, false)
+      }
+      setConfirm(null)
+    } catch (err) {
+      console.error(err)
+      setActionError('Could not complete this action. Nothing was changed. Please try again.')
+      setConfirm(null)
+    } finally {
+      setConfirmBusy(false)
+    }
+  }
+
   return (
     <div className='min-h-screen bg-paper p-4'>
       <div className='max-w-3xl mx-auto'>
@@ -123,13 +202,42 @@ function ServiceDetail({ service, onBack }: { service: Service; onBack: () => vo
         </button>
 
         <h1 className='font-display text-3xl font-semibold text-navy mt-2'>{service.title}</h1>
-        <p className='text-sm text-gray-500 mt-1 mb-6'>{formatDate(service.date)}</p>
+        <p className='text-sm text-gray-500 mt-1 mb-4'>{formatDate(service.date)}</p>
 
-        {service.finalized && (
-          <p className='text-sm text-green-700 bg-green-50 rounded-lg p-3 mb-4'>
-            This service is finalized and locked.
-          </p>
+        {service.finalized ? (
+          <div className='bg-green-50 rounded-lg p-3 mb-4 flex items-center justify-between gap-3'>
+            <p className='text-sm text-green-700'>This service is finalized and locked.</p>
+            <button
+              type='button'
+              onClick={() => setConfirm('reopen')}
+              className='shrink-0 border border-green-300 text-green-700 text-sm font-semibold rounded-lg px-3 py-1'
+            >
+              Reopen
+            </button>
+          </div>
+        ) : (
+          <div className='mb-4'>
+            <button
+              type='button'
+              onClick={() => setConfirm('finalize')}
+              disabled={loading || error !== ''}
+              className='bg-brand hover:bg-brand-dark text-white text-sm font-semibold rounded-lg px-4 py-2 disabled:opacity-60'
+            >
+              Finalize service
+            </button>
+          </div>
         )}
+
+        <div className='grid grid-cols-2 md:grid-cols-4 gap-3 mb-6'>
+          <TotalCard label='Present' value={show(totals.present)} />
+          <TotalCard label='Absent' value={show(totals.absent)} />
+          <TotalCard label='Not marked' value={show(totals.notMarked)} />
+          <TotalCard
+            label='Attendance'
+            value={loading ? '...' : totals.percent + '%'}
+            note={'Out of ' + (loading ? '...' : totals.total) + ' approved'}
+          />
+        </div>
 
         {loading && <p className='text-gray-500'>Loading...</p>}
         {error && <p className='text-sm text-red-600'>{error}</p>}
@@ -183,6 +291,39 @@ function ServiceDetail({ service, onBack }: { service: Service; onBack: () => vo
           })}
         </div>
       </div>
+
+      {confirm && (
+        <div className='fixed inset-0 z-10 bg-black/40 flex items-center justify-center p-4'>
+          <div className='w-full max-w-sm bg-white rounded-xl shadow p-6'>
+            <h2 className='font-display text-2xl font-semibold text-navy'>
+              {confirm === 'finalize' ? 'Finalize this service?' : 'Reopen this service to correct it?'}
+            </h2>
+            <p className='text-sm text-gray-600 mt-3 mb-4'>
+              {confirm === 'finalize'
+                ? totals.notMarked + ' unmarked member(s) will be recorded as absent, and all marks will be locked.'
+                : 'The marks will be unlocked so you can correct them. Finalize again when you are done.'}
+            </p>
+            <div className='flex gap-3'>
+              <button
+                type='button'
+                onClick={() => setConfirm(null)}
+                disabled={confirmBusy}
+                className='flex-1 border border-gray-300 text-navy font-semibold rounded-lg py-2 disabled:opacity-60'
+              >
+                Cancel
+              </button>
+              <button
+                type='button'
+                onClick={handleConfirm}
+                disabled={confirmBusy}
+                className='flex-1 bg-brand hover:bg-brand-dark text-white font-semibold rounded-lg py-2 disabled:opacity-60'
+              >
+                {confirmBusy ? 'Working...' : confirm === 'finalize' ? 'Finalize' : 'Reopen'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -234,6 +375,11 @@ function AdminAttendance() {
     })
   }, [services])
 
+  function handleFinalizedChange(id: string, value: boolean) {
+    setServices((prev) => prev.map((s) => (s.id === id ? { ...s, finalized: value } : s)))
+    setOpenService((prev) => (prev && prev.id === id ? { ...prev, finalized: value } : prev))
+  }
+
   async function handleCreate(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setFormError('')
@@ -271,7 +417,13 @@ function AdminAttendance() {
   }
 
   if (openService) {
-    return <ServiceDetail service={openService} onBack={() => setOpenService(null)} />
+    return (
+      <ServiceDetail
+        service={openService}
+        onBack={() => setOpenService(null)}
+        onFinalizedChange={handleFinalizedChange}
+      />
+    )
   }
 
   return (

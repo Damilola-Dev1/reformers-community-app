@@ -7,9 +7,16 @@ import { settings } from '../config/settings'
 import { useAuth } from '../auth/useAuth'
 
 type Person = {
+  id: string
   status: 'pending' | 'approved'
   gender: string
   dateOfBirth: string
+}
+
+type AttendanceStats = {
+  present: number
+  total: number
+  services: number
 }
 
 type StatCardProps = {
@@ -33,30 +40,70 @@ function AdminDashboard() {
   const [people, setPeople] = useState<Person[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [attendance, setAttendance] = useState<AttendanceStats | null>(null)
+  const [attendanceError, setAttendanceError] = useState(false)
 
   useEffect(() => {
     async function load() {
+      let approvedIds = new Set<string>()
+
       try {
         const q = query(collection(db, 'members'), where('communityId', '==', settings.communityId))
         const snap = await getDocs(q)
-        setPeople(
-          snap.docs.map((d) => {
-            const data = d.data()
-            return {
-              status: data.status === 'approved' ? 'approved' : 'pending',
-              gender: String(data.gender ?? ''),
-              dateOfBirth: String(data.dateOfBirth ?? ''),
-            } as Person
-          })
-        )
+        const loaded = snap.docs.map((d) => {
+          const data = d.data()
+          return {
+            id: d.id,
+            status: data.status === 'approved' ? 'approved' : 'pending',
+            gender: String(data.gender ?? ''),
+            dateOfBirth: String(data.dateOfBirth ?? ''),
+          } as Person
+        })
+        setPeople(loaded)
+        approvedIds = new Set(loaded.filter((p) => p.status === 'approved').map((p) => p.id))
       } catch (err) {
         console.error(err)
         setError('Could not load the numbers. Check your connection and try again.')
+        setLoading(false)
+        return
+      }
+
+      try {
+        const servicesQuery = query(
+          collection(db, 'services'),
+          where('communityId', '==', settings.communityId),
+          where('finalized', '==', true)
+        )
+        const servicesSnap = await getDocs(servicesQuery)
+        const finalizedIds = new Set(servicesSnap.docs.map((d) => d.id))
+
+        if (finalizedIds.size === 0) {
+          setAttendance({ present: 0, total: 0, services: 0 })
+        } else {
+          const attendanceQuery = query(
+            collection(db, 'attendance'),
+            where('communityId', '==', settings.communityId)
+          )
+          const attendanceSnap = await getDocs(attendanceQuery)
+
+          let present = 0
+          let total = 0
+          attendanceSnap.docs.forEach((d) => {
+            const data = d.data()
+            if (finalizedIds.has(String(data.serviceId ?? '')) && approvedIds.has(String(data.memberId ?? ''))) {
+              total += 1
+              if (data.status === 'present') present += 1
+            }
+          })
+          setAttendance({ present, total, services: finalizedIds.size })
+        }
+      } catch (err) {
+        console.error(err)
+        setAttendanceError(true)
       } finally {
         setLoading(false)
       }
     }
-
     load()
   }, [])
 
@@ -77,6 +124,18 @@ function AdminDashboard() {
       females: approved.filter((p) => p.gender === 'female').length,
     }
   }, [people])
+
+  const attendanceCard = useMemo(() => {
+    if (loading) return { value: '...', note: '' }
+    if (attendanceError) return { value: '-', note: 'Could not load attendance' }
+    if (!attendance || attendance.total === 0) {
+      return { value: '-', note: 'Finalize a service to see this' }
+    }
+
+    const percent = Math.round((attendance.present / attendance.total) * 100)
+    const word = attendance.services === 1 ? 'service' : 'services'
+    return { value: percent + '%', note: 'Across ' + attendance.services + ' finalized ' + word }
+  }, [loading, attendanceError, attendance])
 
   const firstName = profile?.fullName.split(' ')[0] ?? ''
 
@@ -118,7 +177,7 @@ function AdminDashboard() {
           <StatCard label='Total registered' value={show(stats.totalRegistered)} note='Approved and pending' />
           <StatCard label='Males' value={show(stats.males)} note='Approved' />
           <StatCard label='Females' value={show(stats.females)} note='Approved' />
-          <StatCard label='Attendance rate' value='-' note='Available after attendance is set up' />
+          <StatCard label='Attendance rate' value={attendanceCard.value} note={attendanceCard.note} />
         </div>
 
         <h2 className='font-display text-xl font-semibold text-navy mt-8 mb-3'>Manage</h2>
