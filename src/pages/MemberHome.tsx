@@ -4,6 +4,7 @@ import { auth } from '../firebase'
 import { settings } from '../config/settings'
 import { useAuth } from '../auth/useAuth'
 import NextMeeting from '../components/NextMeeting'
+import MyAttendance from '../components/MyAttendance'
 
 function MemberHome() {
   const { profile } = useAuth()
@@ -30,6 +31,8 @@ function MemberHome() {
 
         <div className='space-y-4'>
           <NextMeeting />
+
+          <MyAttendance />
 
           <div className='bg-white rounded-xl shadow p-4'>
             <h2 className='font-display text-xl font-semibold text-navy mb-1'>Announcements</h2>
