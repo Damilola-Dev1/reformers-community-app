@@ -6,12 +6,14 @@ import { auth, db } from '../firebase'
 import { settings } from '../config/settings'
 import { useAuth } from '../auth/useAuth'
 import NextMeeting from '../components/NextMeeting'
+import MemberGrowthChart from '../components/MemberGrowthChart'
 
 type Person = {
   id: string
   status: 'pending' | 'approved'
   gender: string
   dateOfBirth: string
+  createdAt: Date | null
 }
 
 type AttendanceStats = {
@@ -53,11 +55,16 @@ function AdminDashboard() {
         const snap = await getDocs(q)
         const loaded = snap.docs.map((d) => {
           const data = d.data()
+          const created =
+            data.createdAt && typeof data.createdAt.toDate === 'function'
+              ? (data.createdAt.toDate() as Date)
+              : null
           return {
             id: d.id,
             status: data.status === 'approved' ? 'approved' : 'pending',
             gender: String(data.gender ?? ''),
             dateOfBirth: String(data.dateOfBirth ?? ''),
+            createdAt: created,
           } as Person
         })
         setPeople(loaded)
@@ -138,6 +145,14 @@ function AdminDashboard() {
     return { value: percent + '%', note: 'Across ' + attendance.services + ' finalized ' + word }
   }, [loading, attendanceError, attendance])
 
+  const memberDates = useMemo(() => {
+    const dates: Date[] = []
+    people.forEach((p) => {
+      if (p.status === 'approved' && p.createdAt) dates.push(p.createdAt)
+    })
+    return dates
+  }, [people])
+
   const firstName = profile?.fullName.split(' ')[0] ?? ''
 
   function show(n: number): string {
@@ -179,6 +194,10 @@ function AdminDashboard() {
           <StatCard label='Males' value={show(stats.males)} note='Approved' />
           <StatCard label='Females' value={show(stats.females)} note='Approved' />
           <StatCard label='Attendance rate' value={attendanceCard.value} note={attendanceCard.note} />
+        </div>
+
+        <div className='mt-6'>
+          <MemberGrowthChart dates={memberDates} loading={loading} />
         </div>
 
         <div className='mt-6'>
