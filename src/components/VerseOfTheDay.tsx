@@ -67,8 +67,10 @@ function VerseOfTheDay() {
   return (
     <div className='bg-navy rounded-xl shadow p-4'>
       <h2 className='text-xs font-semibold uppercase tracking-wide text-orange-300 mb-2'>Verse of the day</h2>
-      <p className='font-display text-lg text-white leading-snug'>{shown.text}</p>
-      <p className='text-sm text-gray-300 mt-2'>{shown.reference}</p>
+      <div key={shown.text} className='fade-in'>
+        <p className='font-display text-lg text-white leading-snug'>{shown.text}</p>
+        <p className='text-sm text-gray-300 mt-2'>{shown.reference}</p>
+      </div>
     </div>
   )
 }

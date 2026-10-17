@@ -16,6 +16,7 @@ import MemberAssignmentDetail from './pages/MemberAssignmentDetail'
 import AdminLayout from './components/AdminLayout'
 import MemberLayout from './components/MemberLayout'
 import RequireAuth from './auth/RequireAuth'
+import './animations.css'
 
 function App() {
   return (

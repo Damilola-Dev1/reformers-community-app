@@ -15,11 +15,17 @@ function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [errorKey, setErrorKey] = useState(0)
   const [info, setInfo] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   if (!loading && user) {
     return <Navigate to={homeFor(profile)} replace />
+  }
+
+  function fail(message: string) {
+    setError(message)
+    setErrorKey((k) => k + 1)
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -28,7 +34,7 @@ function Login() {
     setInfo('')
 
     if (email.trim() === '' || password === '') {
-      setError('Enter your email and password')
+      fail('Enter your email and password')
       return
     }
 
@@ -38,13 +44,13 @@ function Login() {
     } catch (err) {
       const code = (err as { code?: string }).code
       if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
-        setError('Wrong email or password')
+        fail('Wrong email or password')
       } else if (code === 'auth/too-many-requests') {
-        setError('Too many attempts. Wait a few minutes and try again.')
+        fail('Too many attempts. Wait a few minutes and try again.')
       } else if (code === 'auth/network-request-failed') {
-        setError('Network problem. Check your connection and try again.')
+        fail('Network problem. Check your connection and try again.')
       } else {
-        setError('Something went wrong. Please try again.')
+        fail('Something went wrong. Please try again.')
         console.error(err)
       }
     } finally {
@@ -57,7 +63,7 @@ function Login() {
     setInfo('')
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      setError('Type your email above first, then click Forgot password')
+      fail('Type your email above first, then click Forgot password')
       return
     }
 
@@ -67,9 +73,9 @@ function Login() {
     } catch (err) {
       const code = (err as { code?: string }).code
       if (code === 'auth/network-request-failed') {
-        setError('Network problem. Check your connection and try again.')
+        fail('Network problem. Check your connection and try again.')
       } else {
-        setError('Could not send the reset email. Please try again.')
+        fail('Could not send the reset email. Please try again.')
         console.error(err)
       }
     }
@@ -78,6 +84,17 @@ function Login() {
   return (
     <div className='min-h-screen bg-paper flex items-center justify-center p-4'>
       <div className='w-full max-w-md space-y-4'>
+        <div className='text-center'>
+          <img
+            src='/logo.png'
+            alt={settings.name + ' logo'}
+            onError={(e) => {
+              e.currentTarget.style.display = 'none'
+            }}
+            className='mx-auto h-20 w-auto'
+          />
+        </div>
+
         <form onSubmit={handleSubmit} noValidate className='bg-white rounded-xl shadow p-6'>
           <h1 className='font-display text-3xl font-semibold text-navy'>Welcome back</h1>
           <p className='text-sm text-gray-500 mt-1 mb-6'>Log in to {settings.name}</p>
@@ -110,7 +127,11 @@ function Login() {
             </button>
           </div>
 
-          {error && <p className='text-sm text-red-600 mb-3'>{error}</p>}
+          {error && (
+            <p key={errorKey} className='text-sm text-red-600 mb-3 shake'>
+              {error}
+            </p>
+          )}
           {info && <p className='text-sm text-green-700 mb-3'>{info}</p>}
 
           <button

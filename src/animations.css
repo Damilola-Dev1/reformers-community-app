@@ -1,0 +1,50 @@
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+/* Every white card fades up, one after another */
+.rounded-xl.shadow { animation: fade-up 0.4s ease-out backwards; }
+.rounded-xl.shadow:nth-child(2) { animation-delay: 0.05s; }
+.rounded-xl.shadow:nth-child(3) { animation-delay: 0.1s; }
+.rounded-xl.shadow:nth-child(4) { animation-delay: 0.15s; }
+.rounded-xl.shadow:nth-child(5) { animation-delay: 0.2s; }
+.rounded-xl.shadow:nth-child(6) { animation-delay: 0.25s; }
+.rounded-xl.shadow:nth-child(7) { animation-delay: 0.3s; }
+.rounded-xl.shadow:nth-child(8) { animation-delay: 0.35s; }
+
+/* Smooth buttons and links, with a small press effect */
+button, a {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease,
+    opacity 0.2s ease, transform 0.1s ease;
+}
+button:not(:disabled):active { transform: scale(0.97); }
+
+/* Error and success messages fade in */
+p.text-red-600, p.text-green-700 { animation: fade-in 0.25s ease-out; }
+p.shake { animation: shake 0.4s ease-in-out; }
+
+/* Used by the verse card */
+.fade-in { animation: fade-in 0.6s ease-out; }
+
+/* Respect "reduce motion" settings */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

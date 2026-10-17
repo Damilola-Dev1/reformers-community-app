@@ -53,7 +53,13 @@ function MemberAnnouncements() {
     <div className='bg-white rounded-xl shadow p-4'>
       <h2 className='font-display text-xl font-semibold text-navy mb-2'>Announcements</h2>
 
-      {loading && <p className='text-sm text-gray-500'>Loading...</p>}
+      {loading && (
+  <div className='space-y-2 animate-pulse'>
+    <div className='h-4 bg-gray-200 rounded w-2/3' />
+    <div className='h-3 bg-gray-100 rounded w-1/3' />
+    <div className='h-3 bg-gray-100 rounded w-full' />
+  </div>
+)}
       {error && <p className='text-sm text-red-600'>{error}</p>}
       {!loading && !error && items.length === 0 && (
         <p className='text-sm text-gray-500'>No announcements yet.</p>
