@@ -13,6 +13,8 @@ import AdminExports from './pages/AdminExports'
 import MemberHome from './pages/MemberHome'
 import MemberProfile from './pages/MemberProfile'
 import MemberAssignmentDetail from './pages/MemberAssignmentDetail'
+import AdminLayout from './components/AdminLayout'
+import MemberLayout from './components/MemberLayout'
 import RequireAuth from './auth/RequireAuth'
 
 function App() {
@@ -25,19 +27,23 @@ function App() {
         <Route path='/pending' element={<Pending />} />
 
         {/* Admin Routes (Protected) */}
-        <Route path='/admin' element={<RequireAuth adminOnly><AdminDashboard /></RequireAuth>} />
-        <Route path='/admin/members' element={<RequireAuth adminOnly><AdminMembers /></RequireAuth>} />
-        <Route path='/admin/birthdays' element={<RequireAuth adminOnly><AdminBirthdays /></RequireAuth>} />
-        <Route path='/admin/attendance' element={<RequireAuth adminOnly><AdminAttendance /></RequireAuth>} />
-        <Route path='/admin/announcements' element={<RequireAuth adminOnly><AdminAnnouncements /></RequireAuth>} />
-        <Route path='/admin/assignments' element={<RequireAuth adminOnly><AdminAssignments /></RequireAuth>} />
-        <Route path='/admin/assignments/:id' element={<RequireAuth adminOnly><AdminAssignmentReview /></RequireAuth>} />
-        <Route path='/admin/exports' element={<RequireAuth adminOnly><AdminExports /></RequireAuth>} />
+        <Route element={<RequireAuth adminOnly><AdminLayout /></RequireAuth>}>
+          <Route path='/admin' element={<AdminDashboard />} />
+          <Route path='/admin/members' element={<AdminMembers />} />
+          <Route path='/admin/birthdays' element={<AdminBirthdays />} />
+          <Route path='/admin/attendance' element={<AdminAttendance />} />
+          <Route path='/admin/announcements' element={<AdminAnnouncements />} />
+          <Route path='/admin/assignments' element={<AdminAssignments />} />
+          <Route path='/admin/assignments/:id' element={<AdminAssignmentReview />} />
+          <Route path='/admin/exports' element={<AdminExports />} />
+        </Route>
 
         {/* Member Routes (Protected) */}
-        <Route path='/member' element={<RequireAuth><MemberHome /></RequireAuth>} />
-        <Route path='/member/profile' element={<RequireAuth><MemberProfile /></RequireAuth>} />
-        <Route path='/member/assignments/:id' element={<RequireAuth><MemberAssignmentDetail /></RequireAuth>} />
+        <Route element={<RequireAuth><MemberLayout /></RequireAuth>}>
+          <Route path='/member' element={<MemberHome />} />
+          <Route path='/member/profile' element={<MemberProfile />} />
+          <Route path='/member/assignments/:id' element={<MemberAssignmentDetail />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   )

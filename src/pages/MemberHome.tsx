@@ -1,8 +1,8 @@
-import { Link } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
 import { auth } from '../firebase'
 import { settings } from '../config/settings'
 import { useAuth } from '../auth/useAuth'
+import VerseOfTheDay from '../components/VerseOfTheDay'
 import NextMeeting from '../components/NextMeeting'
 import MyAttendance from '../components/MyAttendance'
 import MemberAnnouncements from '../components/MemberAnnouncements'
@@ -32,6 +32,8 @@ function MemberHome() {
         </div>
 
         <div className='space-y-4'>
+          <VerseOfTheDay />
+
           <NextMeeting />
 
           <MyAttendance />
@@ -39,13 +41,6 @@ function MemberHome() {
           <MemberAnnouncements />
 
           <MemberAssignments />
-
-          <Link
-            to='/member/profile'
-            className='inline-block border border-gray-300 bg-white text-navy text-sm font-semibold rounded-lg px-3 py-2'
-          >
-            My profile
-          </Link>
         </div>
       </div>
     </div>
