@@ -11,6 +11,7 @@ import AdminAssignments from './pages/AdminAssignments'
 import AdminExports from './pages/AdminExports'
 import MemberHome from './pages/MemberHome'
 import MemberProfile from './pages/MemberProfile'
+import MemberAssignmentDetail from './pages/MemberAssignmentDetail'
 import RequireAuth from './auth/RequireAuth'
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
         {/* Member Routes (Protected) */}
         <Route path='/member' element={<RequireAuth><MemberHome /></RequireAuth>} />
         <Route path='/member/profile' element={<RequireAuth><MemberProfile /></RequireAuth>} />
+        <Route path='/member/assignments/:id' element={<RequireAuth><MemberAssignmentDetail /></RequireAuth>} />
       </Routes>
     </BrowserRouter>
   )
