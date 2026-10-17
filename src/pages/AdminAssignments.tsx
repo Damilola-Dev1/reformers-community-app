@@ -13,6 +13,11 @@ type Assignment = {
   createdAt: Date | null
 }
 
+type SubInfo = {
+  assignmentId: string
+  status: string
+}
+
 function todayString(): string {
   const n = new Date()
   return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0')
@@ -31,6 +36,8 @@ function formatWhen(value: Date | null): string {
 
 function AdminAssignments() {
   const [items, setItems] = useState<Assignment[]>([])
+  const [subs, setSubs] = useState<SubInfo[]>([])
+  const [memberCount, setMemberCount] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [title, setTitle] = useState('')
@@ -64,6 +71,25 @@ function AdminAssignments() {
       } catch (err) {
         console.error(err)
         setError('Could not load assignments. Check your connection and try again.')
+        setLoading(false)
+        return
+      }
+
+      try {
+        const subQuery = query(collection(db, 'submissions'), where('communityId', '==', settings.communityId))
+        const subSnap = await getDocs(subQuery)
+        setSubs(
+          subSnap.docs.map((d) => ({
+            assignmentId: String(d.data().assignmentId ?? ''),
+            status: String(d.data().status ?? 'submitted'),
+          }))
+        )
+
+        const memberQuery = query(collection(db, 'members'), where('communityId', '==', settings.communityId))
+        const memberSnap = await getDocs(memberQuery)
+        setMemberCount(memberSnap.docs.filter((d) => d.data().status === 'approved').length)
+      } catch (err) {
+        console.error(err)
       } finally {
         setLoading(false)
       }
@@ -127,6 +153,16 @@ function AdminAssignments() {
     } finally {
       setDeletingId('')
     }
+  }
+
+  function progressText(assignmentId: string): string {
+    const mine = subs.filter((s) => s.assignmentId === assignmentId)
+    const approved = mine.filter((s) => s.status === 'approved').length
+    const revision = mine.filter((s) => s.status === 'revision').length
+    const total = memberCount === null ? '' : ' of ' + memberCount
+    let text = mine.length + total + ' submitted · ' + approved + ' approved'
+    if (revision > 0) text += ' · ' + revision + ' need revision'
+    return text
   }
 
   return (
@@ -199,8 +235,15 @@ function AdminAssignments() {
                 {a.dueDate ? ' · Due ' + formatDue(a.dueDate) : ' · No due date'}
               </p>
               <p className='text-sm text-gray-700 whitespace-pre-line'>{a.instructions}</p>
+              <p className='text-sm font-semibold text-navy mt-3'>{loading ? '...' : progressText(a.id)}</p>
 
-              <div className='mt-3 flex items-center gap-2'>
+              <div className='mt-3 flex flex-wrap items-center gap-2'>
+                <Link
+                  to={'/admin/assignments/' + a.id}
+                  className='bg-brand hover:bg-brand-dark text-white text-sm font-semibold rounded-lg px-3 py-1'
+                >
+                  View submissions
+                </Link>
                 {confirmId === a.id ? (
                   <>
                     <button

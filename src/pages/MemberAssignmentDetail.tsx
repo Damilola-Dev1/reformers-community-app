@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore'
+import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
 import { auth, db } from '../firebase'
 import { settings } from '../config/settings'
 import { useAuth } from '../auth/useAuth'
@@ -16,6 +16,8 @@ type Assignment = {
 type Submission = {
   text: string
   link: string
+  status: string
+  reviewNote: string
   createdAt: Date | null
 }
 
@@ -73,14 +75,21 @@ function MemberAssignmentDetail() {
         const sSnap = await getDoc(doc(db, 'submissions', id + '_' + uid))
         if (sSnap.exists()) {
           const s = sSnap.data()
-          setSubmission({
+          const loaded: Submission = {
             text: String(s.text ?? ''),
             link: String(s.link ?? ''),
+            status: String(s.status ?? 'submitted'),
+            reviewNote: String(s.reviewNote ?? ''),
             createdAt:
               s.createdAt && typeof s.createdAt.toDate === 'function'
                 ? (s.createdAt.toDate() as Date)
                 : null,
-          })
+          }
+          setSubmission(loaded)
+          if (loaded.status === 'revision') {
+            setText(loaded.text)
+            setLink(loaded.link)
+          }
         }
       } catch (err) {
         console.error(err)
@@ -113,28 +122,48 @@ function MemberAssignmentDetail() {
       return
     }
 
+    const resubmitting = submission !== null && submission.status === 'revision'
+
     setSaving(true)
     try {
-      await setDoc(doc(db, 'submissions', id + '_' + uid), {
-        communityId: settings.communityId,
-        assignmentId: id,
-        memberId: uid,
-        memberName: profile?.fullName ?? '',
-        text: cleanText,
-        link: cleanLink,
-        status: 'submitted',
-        createdAt: serverTimestamp(),
-      })
-      setSubmission({ text: cleanText, link: cleanLink, createdAt: new Date() })
+      if (resubmitting) {
+        await updateDoc(doc(db, 'submissions', id + '_' + uid), {
+          text: cleanText,
+          link: cleanLink,
+          status: 'submitted',
+          updatedAt: serverTimestamp(),
+        })
+        setSubmission({
+          text: cleanText,
+          link: cleanLink,
+          status: 'submitted',
+          reviewNote: '',
+          createdAt: submission ? submission.createdAt : new Date(),
+        })
+      } else {
+        await setDoc(doc(db, 'submissions', id + '_' + uid), {
+          communityId: settings.communityId,
+          assignmentId: id,
+          memberId: uid,
+          memberName: profile?.fullName ?? '',
+          text: cleanText,
+          link: cleanLink,
+          status: 'submitted',
+          createdAt: serverTimestamp(),
+        })
+        setSubmission({ text: cleanText, link: cleanLink, status: 'submitted', reviewNote: '', createdAt: new Date() })
+      }
     } catch (err) {
       console.error(err)
-      setFormError('Could not submit. If you already submitted this assignment, refresh the page.')
+      setFormError('Could not submit. Refresh the page and try again.')
     } finally {
       setSaving(false)
     }
   }
 
   const overdue = assignment !== null && assignment.dueDate !== '' && assignment.dueDate < todayString()
+  const needsRevision = submission !== null && submission.status === 'revision'
+  const approved = submission !== null && submission.status === 'approved'
 
   return (
     <div className='min-h-screen bg-paper p-4'>
@@ -149,8 +178,8 @@ function MemberAssignmentDetail() {
           <>
             <h1 className='font-display text-3xl font-semibold text-navy mt-2'>{assignment.title}</h1>
             {assignment.dueDate && (
-              <p className={'text-sm mt-1 ' + (overdue ? 'text-red-600 font-semibold' : 'text-gray-500')}>
-                {overdue ? 'Overdue: was due ' : 'Due '}
+              <p className={'text-sm mt-1 ' + (overdue && !approved ? 'text-red-600 font-semibold' : 'text-gray-500')}>
+                {overdue && !approved ? 'Overdue: was due ' : 'Due '}
                 {formatDue(assignment.dueDate)}
               </p>
             )}
@@ -160,11 +189,18 @@ function MemberAssignmentDetail() {
               <p className='text-sm text-gray-700 whitespace-pre-line'>{assignment.instructions}</p>
             </div>
 
-            {submission ? (
+            {submission && !needsRevision && (
               <div className='bg-white rounded-xl shadow p-4 mt-4'>
                 <div className='flex items-center justify-between gap-2 mb-2'>
                   <h2 className='font-display text-xl font-semibold text-navy'>Your submission</h2>
-                  <span className='text-xs font-semibold rounded-full px-2 py-1 bg-green-100 text-green-700'>Submitted</span>
+                  <span
+                    className={
+                      'text-xs font-semibold rounded-full px-2 py-1 ' +
+                      (approved ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700')
+                    }
+                  >
+                    {approved ? 'Approved' : 'Submitted'}
+                  </span>
                 </div>
                 <p className='text-xs text-gray-400 mb-2'>Sent {formatWhen(submission.createdAt)}</p>
                 <p className='text-sm text-gray-700 whitespace-pre-line'>{submission.text}</p>
@@ -176,9 +212,20 @@ function MemberAssignmentDetail() {
                   </p>
                 )}
               </div>
-            ) : (
+            )}
+
+            {needsRevision && submission && (
+              <div className='bg-orange-50 border border-orange-200 rounded-xl p-4 mt-4'>
+                <p className='text-sm font-semibold text-orange-700 mb-1'>Revision requested</p>
+                <p className='text-sm text-gray-700 whitespace-pre-line'>{submission.reviewNote}</p>
+              </div>
+            )}
+
+            {(!submission || needsRevision) && (
               <form onSubmit={handleSubmit} noValidate className='bg-white rounded-xl shadow p-4 mt-4'>
-                <h2 className='font-display text-xl font-semibold text-navy mb-3'>Your answer</h2>
+                <h2 className='font-display text-xl font-semibold text-navy mb-3'>
+                  {needsRevision ? 'Update your answer' : 'Your answer'}
+                </h2>
 
                 <div className='mb-3'>
                   <label className='block text-sm font-medium text-navy mb-1'>Answer</label>
@@ -202,14 +249,18 @@ function MemberAssignmentDetail() {
 
                 {formError && <p className='text-sm text-red-600 mb-3'>{formError}</p>}
 
-                <p className='text-xs text-gray-400 mb-3'>You cannot edit your answer after you submit it.</p>
+                <p className='text-xs text-gray-400 mb-3'>
+                  {needsRevision
+                    ? 'Submitting sends your updated answer back for review.'
+                    : 'You cannot edit your answer after you submit it.'}
+                </p>
 
                 <button
                   type='submit'
                   disabled={saving}
                   className='bg-brand hover:bg-brand-dark text-white font-semibold rounded-lg px-4 py-2 disabled:opacity-60'
                 >
-                  {saving ? 'Submitting...' : 'Submit'}
+                  {saving ? 'Submitting...' : needsRevision ? 'Resubmit' : 'Submit'}
                 </button>
               </form>
             )}

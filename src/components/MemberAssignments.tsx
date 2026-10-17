@@ -22,9 +22,23 @@ function formatDue(value: string): string {
   return new Date(y, m - 1, d).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
+function tagLabel(status: string | undefined): string {
+  if (status === 'approved') return 'Approved'
+  if (status === 'revision') return 'Needs revision'
+  if (status === 'submitted') return 'Submitted'
+  return 'Not submitted'
+}
+
+function tagClass(status: string | undefined): string {
+  if (status === 'approved') return 'bg-blue-100 text-blue-700'
+  if (status === 'revision') return 'bg-orange-100 text-orange-700'
+  if (status === 'submitted') return 'bg-green-100 text-green-700'
+  return 'bg-gray-100 text-gray-600'
+}
+
 function MemberAssignments() {
   const [items, setItems] = useState<Assignment[]>([])
-  const [submittedIds, setSubmittedIds] = useState<Set<string>>(new Set())
+  const [statuses, setStatuses] = useState<Map<string, string>>(new Map())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -58,7 +72,11 @@ function MemberAssignments() {
         const uid = auth.currentUser?.uid ?? ''
         const subQuery = query(collection(db, 'submissions'), where('memberId', '==', uid))
         const subSnap = await getDocs(subQuery)
-        setSubmittedIds(new Set(subSnap.docs.map((d) => String(d.data().assignmentId ?? ''))))
+        const map = new Map<string, string>()
+        subSnap.docs.forEach((d) => {
+          map.set(String(d.data().assignmentId ?? ''), String(d.data().status ?? 'submitted'))
+        })
+        setStatuses(map)
       } catch (err) {
         console.error(err)
       } finally {
@@ -82,8 +100,8 @@ function MemberAssignments() {
 
       <div className='space-y-2'>
         {items.map((a) => {
-          const submitted = submittedIds.has(a.id)
-          const overdue = a.dueDate !== '' && a.dueDate < today
+          const status = statuses.get(a.id)
+          const overdue = a.dueDate !== '' && a.dueDate < today && (status === undefined || status === 'revision')
           return (
             <Link
               key={a.id}
@@ -92,19 +110,12 @@ function MemberAssignments() {
             >
               <div className='min-w-0'>
                 <p className='font-semibold text-navy'>{a.title}</p>
-                <p className={'text-xs ' + (overdue && !submitted ? 'text-red-600 font-semibold' : 'text-gray-400')}>
-                  {a.dueDate
-                    ? (overdue && !submitted ? 'Overdue: was due ' : 'Due ') + formatDue(a.dueDate)
-                    : 'No due date'}
+                <p className={'text-xs ' + (overdue ? 'text-red-600 font-semibold' : 'text-gray-400')}>
+                  {a.dueDate ? (overdue ? 'Overdue: was due ' : 'Due ') + formatDue(a.dueDate) : 'No due date'}
                 </p>
               </div>
-              <span
-                className={
-                  'shrink-0 text-xs font-semibold rounded-full px-2 py-1 ' +
-                  (submitted ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600')
-                }
-              >
-                {submitted ? 'Submitted' : 'Not submitted'}
+              <span className={'shrink-0 text-xs font-semibold rounded-full px-2 py-1 ' + tagClass(status)}>
+                {tagLabel(status)}
               </span>
             </Link>
           )

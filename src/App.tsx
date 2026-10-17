@@ -8,6 +8,7 @@ import AdminBirthdays from './pages/AdminBirthdays'
 import AdminAttendance from './pages/AdminAttendance'
 import AdminAnnouncements from './pages/AdminAnnouncements'
 import AdminAssignments from './pages/AdminAssignments'
+import AdminAssignmentReview from './pages/AdminAssignmentReview'
 import AdminExports from './pages/AdminExports'
 import MemberHome from './pages/MemberHome'
 import MemberProfile from './pages/MemberProfile'
@@ -30,6 +31,7 @@ function App() {
         <Route path='/admin/attendance' element={<RequireAuth adminOnly><AdminAttendance /></RequireAuth>} />
         <Route path='/admin/announcements' element={<RequireAuth adminOnly><AdminAnnouncements /></RequireAuth>} />
         <Route path='/admin/assignments' element={<RequireAuth adminOnly><AdminAssignments /></RequireAuth>} />
+        <Route path='/admin/assignments/:id' element={<RequireAuth adminOnly><AdminAssignmentReview /></RequireAuth>} />
         <Route path='/admin/exports' element={<RequireAuth adminOnly><AdminExports /></RequireAuth>} />
 
         {/* Member Routes (Protected) */}
