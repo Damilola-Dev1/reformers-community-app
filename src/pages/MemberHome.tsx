@@ -5,6 +5,7 @@ import { settings } from '../config/settings'
 import { useAuth } from '../auth/useAuth'
 import NextMeeting from '../components/NextMeeting'
 import MyAttendance from '../components/MyAttendance'
+import MemberAnnouncements from '../components/MemberAnnouncements'
 
 function MemberHome() {
   const { profile } = useAuth()
@@ -34,10 +35,7 @@ function MemberHome() {
 
           <MyAttendance />
 
-          <div className='bg-white rounded-xl shadow p-4'>
-            <h2 className='font-display text-xl font-semibold text-navy mb-1'>Announcements</h2>
-            <p className='text-sm text-gray-500'>Announcements will appear here.</p>
-          </div>
+          <MemberAnnouncements />
 
           <div className='bg-white rounded-xl shadow p-4'>
             <h2 className='font-display text-xl font-semibold text-navy mb-1'>Assignments</h2>

@@ -217,6 +217,9 @@ function AdminDashboard() {
           <Link to='/admin/attendance' className='border border-gray-300 bg-white text-navy text-sm font-semibold rounded-lg px-3 py-2'>
             Attendance
           </Link>
+          <Link to='/admin/announcements' className='border border-gray-300 bg-white text-navy text-sm font-semibold rounded-lg px-3 py-2'>
+            Announcements
+          </Link>
           <Link to='/admin/assignments' className='border border-gray-300 bg-white text-navy text-sm font-semibold rounded-lg px-3 py-2'>
             Assignments
           </Link>
