@@ -5,6 +5,7 @@ import { auth } from '../firebase'
 import { settings } from '../config/settings'
 import { useAuth } from '../auth/useAuth'
 import { homeFor } from '../auth/authContext'
+import AuthBackground from '../components/AuthBackground'
 
 function Pending() {
   const { user, profile, loading, reload } = useAuth()
@@ -34,38 +35,52 @@ function Pending() {
   const firstName = profile?.fullName.split(' ')[0] ?? ''
 
   return (
-    <div className='min-h-screen bg-paper flex items-center justify-center p-4'>
-      <div className='w-full max-w-md bg-white rounded-xl shadow p-6 text-center'>
-        <h1 className='font-display text-3xl font-semibold text-navy'>
-          {firstName ? 'Thank you, ' + firstName : 'Thank you'}
-        </h1>
+    <AuthBackground>
+      <div className='w-full max-w-md'>
+        <div className='relative text-center mb-4'>
+          <div aria-hidden='true' className='auth-glow' />
+          <img
+            src='/logo.png'
+            alt={settings.name + ' logo'}
+            onError={(e) => {
+              e.currentTarget.style.display = 'none'
+            }}
+            className='relative mx-auto h-36 w-auto mix-blend-multiply'
+          />
+        </div>
 
-        <p className='text-sm text-gray-600 mt-3 mb-2'>
-          Your registration for {settings.name} has been received.
-        </p>
+        <div className='bg-white rounded-xl shadow p-6 text-center'>
+          <h1 className='font-display text-3xl font-semibold text-navy'>
+            {firstName ? 'Thank you, ' + firstName : 'Thank you'}
+          </h1>
 
-        <p className='text-sm text-gray-600 mb-6'>
-          A leader will review it and approve your membership. You can log in again later to check.
-        </p>
+          <p className='text-sm text-gray-600 mt-3 mb-2'>
+            Your registration for {settings.name} has been received.
+          </p>
 
-        <div className='flex gap-3'>
-          <button
-            type='button'
-            onClick={() => reload()}
-            className='flex-1 bg-brand hover:bg-brand-dark text-white font-semibold rounded-lg py-2'
-          >
-            Check status
-          </button>
-          <button
-            type='button'
-            onClick={() => signOut(auth)}
-            className='flex-1 border border-gray-300 text-navy font-semibold rounded-lg py-2'
-          >
-            Log out
-          </button>
+          <p className='text-sm text-gray-600 mb-6'>
+            A leader will review it and approve your membership. You can log in again later to check.
+          </p>
+
+          <div className='flex gap-3'>
+            <button
+              type='button'
+              onClick={() => reload()}
+              className='flex-1 bg-brand hover:bg-brand-dark text-white font-semibold rounded-lg py-2'
+            >
+              Check status
+            </button>
+            <button
+              type='button'
+              onClick={() => signOut(auth)}
+              className='flex-1 border border-gray-300 text-navy font-semibold rounded-lg py-2'
+            >
+              Log out
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </AuthBackground>
   )
 }
 

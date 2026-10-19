@@ -5,6 +5,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth'
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { auth, db } from '../firebase'
 import { settings } from '../config/settings'
+import AuthBackground from '../components/AuthBackground'
 
 type RegisterForm = {
   fullName: string
@@ -205,289 +206,303 @@ function Register() {
   }
 
   return (
-    <div className='min-h-screen bg-paper flex items-center justify-center p-4'>
-      <form
-        onSubmit={handleSubmit}
-        noValidate
-        className='w-full max-w-md bg-white rounded-xl shadow p-6'
-      >
-        <h1 className='font-display text-3xl font-semibold text-navy'>Join {settings.name}</h1>
-
-        <p className='text-sm text-gray-500 mt-1 mb-1'>
-          Step {step} of {totalSteps}
-        </p>
-
-        <p className='text-sm font-semibold text-brand mb-6'>{titles[step - 1]}</p>
-
-        {step === 1 && (
-          <div>
-            <div className='mb-4'>
-              <label className='block text-sm font-medium text-navy mb-1'>Full name</label>
-              <input
-                name='fullName'
-                value={form.fullName}
-                onChange={handleChange}
-                className={fieldClass('fullName')}
-              />
-              {errors.fullName && <p className='text-sm text-red-600 mt-1'>{errors.fullName}</p>}
-            </div>
-
-            <div className='mb-4'>
-              <label className='block text-sm font-medium text-navy mb-1'>Email</label>
-              <input
-                name='email'
-                type='email'
-                value={form.email}
-                onChange={handleChange}
-                className={fieldClass('email')}
-              />
-              {errors.email && <p className='text-sm text-red-600 mt-1'>{errors.email}</p>}
-            </div>
-
-            <div className='mb-4'>
-              <label className='block text-sm font-medium text-navy mb-1'>WhatsApp number</label>
-              <input
-                name='phone'
-                type='tel'
-                value={form.phone}
-                onChange={handleChange}
-                className={fieldClass('phone')}
-              />
-              {errors.phone && <p className='text-sm text-red-600 mt-1'>{errors.phone}</p>}
-            </div>
-
-            <div className='mb-6'>
-              <label className='block text-sm font-medium text-navy mb-1'>Password</label>
-              <input
-                name='password'
-                type='password'
-                value={form.password}
-                onChange={handleChange}
-                className={fieldClass('password')}
-              />
-              {errors.password && <p className='text-sm text-red-600 mt-1'>{errors.password}</p>}
-            </div>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div>
-            <div className='mb-4'>
-              <label className='block text-sm font-medium text-navy mb-1'>Gender</label>
-              <select
-                name='gender'
-                value={form.gender}
-                onChange={handleChange}
-                className={fieldClass('gender')}
-              >
-                <option value=''>Select gender</option>
-                <option value='male'>Male</option>
-                <option value='female'>Female</option>
-              </select>
-              {errors.gender && <p className='text-sm text-red-600 mt-1'>{errors.gender}</p>}
-            </div>
-
-            <div className='mb-4'>
-              <label className='block text-sm font-medium text-navy mb-1'>Date of birth</label>
-              <input
-                name='dateOfBirth'
-                type='date'
-                value={form.dateOfBirth}
-                onChange={handleChange}
-                className={fieldClass('dateOfBirth')}
-              />
-              {errors.dateOfBirth && <p className='text-sm text-red-600 mt-1'>{errors.dateOfBirth}</p>}
-            </div>
-
-            <div className='mb-4'>
-              <label className='block text-sm font-medium text-navy mb-1'>Location (city and country)</label>
-              <input
-                name='location'
-                value={form.location}
-                onChange={handleChange}
-                placeholder='e.g. Lagos, Nigeria'
-                className={fieldClass('location')}
-              />
-              {errors.location && <p className='text-sm text-red-600 mt-1'>{errors.location}</p>}
-            </div>
-
-            <div className='mb-4'>
-              <label className='block text-sm font-medium text-navy mb-1'>Marital status</label>
-              <select
-                name='maritalStatus'
-                value={form.maritalStatus}
-                onChange={handleChange}
-                className={fieldClass('maritalStatus')}
-              >
-                <option value=''>Select one</option>
-                <option value='single'>Single</option>
-                <option value='married'>Married</option>
-                <option value='divorced'>Divorced</option>
-                <option value='widowed'>Widowed</option>
-              </select>
-              {errors.maritalStatus && <p className='text-sm text-red-600 mt-1'>{errors.maritalStatus}</p>}
-            </div>
-
-            <div className='mb-6'>
-              <label className='block text-sm font-medium text-navy mb-1'>Occupation (optional)</label>
-              <input
-                name='occupation'
-                value={form.occupation}
-                onChange={handleChange}
-                className={fieldClass('occupation')}
-              />
-            </div>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div>
-            <div className='mb-4'>
-              <label className='block text-sm font-medium text-navy mb-1'>Are you born again?</label>
-              <select
-                name='bornAgain'
-                value={form.bornAgain}
-                onChange={handleChange}
-                className={fieldClass('bornAgain')}
-              >
-                <option value=''>Select one</option>
-                <option value='yes'>Yes</option>
-                <option value='no'>No</option>
-              </select>
-              {errors.bornAgain && <p className='text-sm text-red-600 mt-1'>{errors.bornAgain}</p>}
-            </div>
-
-            <div className='mb-4'>
-              <label className='block text-sm font-medium text-navy mb-1'>Have you received the Holy Spirit?</label>
-              <select
-                name='holySpirit'
-                value={form.holySpirit}
-                onChange={handleChange}
-                className={fieldClass('holySpirit')}
-              >
-                <option value=''>Select one</option>
-                <option value='yes'>Yes</option>
-                <option value='no'>No</option>
-                <option value='not-sure'>Not sure</option>
-              </select>
-              {errors.holySpirit && <p className='text-sm text-red-600 mt-1'>{errors.holySpirit}</p>}
-            </div>
-
-            <div className='mb-4'>
-              <label className='block text-sm font-medium text-navy mb-1'>How did you hear about us?</label>
-              <select
-                name='howHeard'
-                value={form.howHeard}
-                onChange={handleChange}
-                className={fieldClass('howHeard')}
-              >
-                <option value=''>Select one</option>
-                <option value='friend-or-family'>Friend or family</option>
-                <option value='whatsapp'>WhatsApp</option>
-                <option value='social-media'>Social media</option>
-                <option value='event'>Event or gathering</option>
-                <option value='other'>Other</option>
-              </select>
-              {errors.howHeard && <p className='text-sm text-red-600 mt-1'>{errors.howHeard}</p>}
-            </div>
-
-            <div className='mb-4'>
-              <label className='block text-sm font-medium text-navy mb-1'>What are your expectations from {settings.name}?</label>
-              <textarea
-                name='expectations'
-                value={form.expectations}
-                onChange={handleChange}
-                rows={3}
-                className={fieldClass('expectations')}
-              />
-            </div>
-
-            <div className='mb-6'>
-              <label className='block text-sm font-medium text-navy mb-1'>Tell us about your walk with God</label>
-              <textarea
-                name='walkWithGod'
-                value={form.walkWithGod}
-                onChange={handleChange}
-                rows={3}
-                className={fieldClass('walkWithGod')}
-              />
-            </div>
-          </div>
-        )}
-
-        {step === 4 && (
-          <div>
-            <div className='bg-paper border border-gray-200 rounded-lg p-3 text-sm text-gray-600 mb-4'>
-              <p className='mb-2'>
-                By joining {settings.name}, you agree that the information you give here is true and
-                that it will be used only to run this community.
-              </p>
-              <p className='mb-2'>
-                Your details are private. The community leaders can see them, and you can see your
-                own, but other members cannot.
-              </p>
-              <p>
-                Your membership starts after a leader approves your registration.
-              </p>
-            </div>
-
-            <div className='mb-6'>
-              <label className='flex items-start gap-2 text-sm text-navy'>
-                <input
-                  type='checkbox'
-                  checked={termsAccepted}
-                  onChange={(e) => {
-                    setTermsAccepted(e.target.checked)
-                    setErrors({})
-                  }}
-                  className='mt-1'
-                />
-                <span>I agree to the terms and conditions</span>
-              </label>
-              {errors.terms && <p className='text-sm text-red-600 mt-1'>{errors.terms}</p>}
-            </div>
-          </div>
-        )}
-
-        {submitError && <p className='text-sm text-red-600 mb-3'>{submitError}</p>}
-
-        <div className='flex gap-3'>
-          {step > 1 && (
-            <button
-              type='button'
-              onClick={goBack}
-              className='w-1/3 border border-gray-300 text-navy font-semibold rounded-lg py-2'
-            >
-              Back
-            </button>
-          )}
-
-          {step < totalSteps && (
-            <button
-              type='button'
-              onClick={goNext}
-              className='flex-1 bg-brand hover:bg-brand-dark text-white font-semibold rounded-lg py-2'
-            >
-              Next
-            </button>
-          )}
-
-          {step === totalSteps && (
-            <button
-              type='submit'
-              disabled={submitting}
-              className='flex-1 bg-brand hover:bg-brand-dark text-white font-semibold rounded-lg py-2 disabled:opacity-60'
-            >
-              {submitting ? 'Registering...' : 'Register'}
-            </button>
-          )}
+    <AuthBackground>
+      <div className='w-full max-w-md'>
+        <div className='relative text-center mb-4'>
+          <div aria-hidden='true' className='auth-glow' />
+          <img
+            src='/logo.png'
+            alt={settings.name + ' logo'}
+            onError={(e) => {
+              e.currentTarget.style.display = 'none'
+            }}
+            className='relative mx-auto h-28 w-auto mix-blend-multiply'
+          />
         </div>
 
-        <p className='text-sm text-gray-500 mt-4 text-center'>
-          Already registered? <Link to='/login' className='text-brand'>Log in</Link>
-        </p>
-      </form>
-    </div>
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          className='bg-white rounded-xl shadow p-6'
+        >
+          <h1 className='font-display text-3xl font-semibold text-navy'>Join {settings.name}</h1>
+
+          <p className='text-sm text-gray-500 mt-1 mb-1'>
+            Step {step} of {totalSteps}
+          </p>
+
+          <p className='text-sm font-semibold text-brand mb-6'>{titles[step - 1]}</p>
+
+          {step === 1 && (
+            <div>
+              <div className='mb-4'>
+                <label className='block text-sm font-medium text-navy mb-1'>Full name</label>
+                <input
+                  name='fullName'
+                  value={form.fullName}
+                  onChange={handleChange}
+                  className={fieldClass('fullName')}
+                />
+                {errors.fullName && <p className='text-sm text-red-600 mt-1'>{errors.fullName}</p>}
+              </div>
+
+              <div className='mb-4'>
+                <label className='block text-sm font-medium text-navy mb-1'>Email</label>
+                <input
+                  name='email'
+                  type='email'
+                  value={form.email}
+                  onChange={handleChange}
+                  className={fieldClass('email')}
+                />
+                {errors.email && <p className='text-sm text-red-600 mt-1'>{errors.email}</p>}
+              </div>
+
+              <div className='mb-4'>
+                <label className='block text-sm font-medium text-navy mb-1'>WhatsApp number</label>
+                <input
+                  name='phone'
+                  type='tel'
+                  value={form.phone}
+                  onChange={handleChange}
+                  className={fieldClass('phone')}
+                />
+                {errors.phone && <p className='text-sm text-red-600 mt-1'>{errors.phone}</p>}
+              </div>
+
+              <div className='mb-6'>
+                <label className='block text-sm font-medium text-navy mb-1'>Password</label>
+                <input
+                  name='password'
+                  type='password'
+                  value={form.password}
+                  onChange={handleChange}
+                  className={fieldClass('password')}
+                />
+                {errors.password && <p className='text-sm text-red-600 mt-1'>{errors.password}</p>}
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div>
+              <div className='mb-4'>
+                <label className='block text-sm font-medium text-navy mb-1'>Gender</label>
+                <select
+                  name='gender'
+                  value={form.gender}
+                  onChange={handleChange}
+                  className={fieldClass('gender')}
+                >
+                  <option value=''>Select gender</option>
+                  <option value='male'>Male</option>
+                  <option value='female'>Female</option>
+                </select>
+                {errors.gender && <p className='text-sm text-red-600 mt-1'>{errors.gender}</p>}
+              </div>
+
+              <div className='mb-4'>
+                <label className='block text-sm font-medium text-navy mb-1'>Date of birth</label>
+                <input
+                  name='dateOfBirth'
+                  type='date'
+                  value={form.dateOfBirth}
+                  onChange={handleChange}
+                  className={fieldClass('dateOfBirth')}
+                />
+                {errors.dateOfBirth && <p className='text-sm text-red-600 mt-1'>{errors.dateOfBirth}</p>}
+              </div>
+
+              <div className='mb-4'>
+                <label className='block text-sm font-medium text-navy mb-1'>Location (city and country)</label>
+                <input
+                  name='location'
+                  value={form.location}
+                  onChange={handleChange}
+                  placeholder='e.g. Lagos, Nigeria'
+                  className={fieldClass('location')}
+                />
+                {errors.location && <p className='text-sm text-red-600 mt-1'>{errors.location}</p>}
+              </div>
+
+              <div className='mb-4'>
+                <label className='block text-sm font-medium text-navy mb-1'>Marital status</label>
+                <select
+                  name='maritalStatus'
+                  value={form.maritalStatus}
+                  onChange={handleChange}
+                  className={fieldClass('maritalStatus')}
+                >
+                  <option value=''>Select one</option>
+                  <option value='single'>Single</option>
+                  <option value='married'>Married</option>
+                  <option value='divorced'>Divorced</option>
+                  <option value='widowed'>Widowed</option>
+                </select>
+                {errors.maritalStatus && <p className='text-sm text-red-600 mt-1'>{errors.maritalStatus}</p>}
+              </div>
+
+              <div className='mb-6'>
+                <label className='block text-sm font-medium text-navy mb-1'>Occupation (optional)</label>
+                <input
+                  name='occupation'
+                  value={form.occupation}
+                  onChange={handleChange}
+                  className={fieldClass('occupation')}
+                />
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div>
+              <div className='mb-4'>
+                <label className='block text-sm font-medium text-navy mb-1'>Are you born again?</label>
+                <select
+                  name='bornAgain'
+                  value={form.bornAgain}
+                  onChange={handleChange}
+                  className={fieldClass('bornAgain')}
+                >
+                  <option value=''>Select one</option>
+                  <option value='yes'>Yes</option>
+                  <option value='no'>No</option>
+                </select>
+                {errors.bornAgain && <p className='text-sm text-red-600 mt-1'>{errors.bornAgain}</p>}
+              </div>
+
+              <div className='mb-4'>
+                <label className='block text-sm font-medium text-navy mb-1'>Have you received the Holy Spirit?</label>
+                <select
+                  name='holySpirit'
+                  value={form.holySpirit}
+                  onChange={handleChange}
+                  className={fieldClass('holySpirit')}
+                >
+                  <option value=''>Select one</option>
+                  <option value='yes'>Yes</option>
+                  <option value='no'>No</option>
+                  <option value='not-sure'>Not sure</option>
+                </select>
+                {errors.holySpirit && <p className='text-sm text-red-600 mt-1'>{errors.holySpirit}</p>}
+              </div>
+
+              <div className='mb-4'>
+                <label className='block text-sm font-medium text-navy mb-1'>How did you hear about us?</label>
+                <select
+                  name='howHeard'
+                  value={form.howHeard}
+                  onChange={handleChange}
+                  className={fieldClass('howHeard')}
+                >
+                  <option value=''>Select one</option>
+                  <option value='friend-or-family'>Friend or family</option>
+                  <option value='whatsapp'>WhatsApp</option>
+                  <option value='social-media'>Social media</option>
+                  <option value='event'>Event or gathering</option>
+                  <option value='other'>Other</option>
+                </select>
+                {errors.howHeard && <p className='text-sm text-red-600 mt-1'>{errors.howHeard}</p>}
+              </div>
+
+              <div className='mb-4'>
+                <label className='block text-sm font-medium text-navy mb-1'>What are your expectations from {settings.name}?</label>
+                <textarea
+                  name='expectations'
+                  value={form.expectations}
+                  onChange={handleChange}
+                  rows={3}
+                  className={fieldClass('expectations')}
+                />
+              </div>
+
+              <div className='mb-6'>
+                <label className='block text-sm font-medium text-navy mb-1'>Tell us about your walk with God</label>
+                <textarea
+                  name='walkWithGod'
+                  value={form.walkWithGod}
+                  onChange={handleChange}
+                  rows={3}
+                  className={fieldClass('walkWithGod')}
+                />
+              </div>
+            </div>
+          )}
+
+          {step === 4 && (
+            <div>
+              <div className='bg-paper border border-gray-200 rounded-lg p-3 text-sm text-gray-600 mb-4'>
+                <p className='mb-2'>
+                  By joining {settings.name}, you agree that the information you give here is true and
+                  that it will be used only to run this community.
+                </p>
+                <p className='mb-2'>
+                  Your details are private. The community leaders can see them, and you can see your
+                  own, but other members cannot.
+                </p>
+                <p>
+                  Your membership starts after a leader approves your registration.
+                </p>
+              </div>
+
+              <div className='mb-6'>
+                <label className='flex items-start gap-2 text-sm text-navy'>
+                  <input
+                    type='checkbox'
+                    checked={termsAccepted}
+                    onChange={(e) => {
+                      setTermsAccepted(e.target.checked)
+                      setErrors({})
+                    }}
+                    className='mt-1'
+                  />
+                  <span>I agree to the terms and conditions</span>
+                </label>
+                {errors.terms && <p className='text-sm text-red-600 mt-1'>{errors.terms}</p>}
+              </div>
+            </div>
+          )}
+
+          {submitError && <p className='text-sm text-red-600 mb-3'>{submitError}</p>}
+
+          <div className='flex gap-3'>
+            {step > 1 && (
+              <button
+                type='button'
+                onClick={goBack}
+                className='w-1/3 border border-gray-300 text-navy font-semibold rounded-lg py-2'
+              >
+                Back
+              </button>
+            )}
+
+            {step < totalSteps && (
+              <button
+                type='button'
+                onClick={goNext}
+                className='flex-1 bg-brand hover:bg-brand-dark text-white font-semibold rounded-lg py-2'
+              >
+                Next
+              </button>
+            )}
+
+            {step === totalSteps && (
+              <button
+                type='submit'
+                disabled={submitting}
+                className='flex-1 bg-brand hover:bg-brand-dark text-white font-semibold rounded-lg py-2 disabled:opacity-60'
+              >
+                {submitting ? 'Registering...' : 'Register'}
+              </button>
+            )}
+          </div>
+
+          <p className='text-sm text-gray-500 mt-4 text-center'>
+            Already registered? <Link to='/login' className='text-brand'>Log in</Link>
+          </p>
+        </form>
+      </div>
+    </AuthBackground>
   )
 }
 
