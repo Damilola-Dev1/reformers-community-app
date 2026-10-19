@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { addDoc, collection, deleteDoc, doc, getDocs, query, serverTimestamp, where } from 'firebase/firestore'
 import { db } from '../firebase'
 import { settings } from '../config/settings'
+import { APP_URL, openWhatsAppShare } from '../config/whatsapp'
 
 type Assignment = {
   id: string
@@ -100,7 +101,6 @@ function AdminAssignments() {
   async function handlePost(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setFormError('')
-
     const cleanTitle = title.trim()
     const cleanInstructions = instructions.trim()
     if (cleanTitle.length < 2) {
@@ -143,6 +143,7 @@ function AdminAssignments() {
   async function handleDelete(id: string) {
     setFormError('')
     setDeletingId(id)
+
     try {
       await deleteDoc(doc(db, 'assignments', id))
       setItems((prev) => prev.filter((a) => a.id !== id))
@@ -153,6 +154,15 @@ function AdminAssignments() {
     } finally {
       setDeletingId('')
     }
+  }
+
+  function handleNotify() {
+    const text =
+      'A new assignment has been posted on ' +
+      settings.name +
+      '. Please log in to the app to check it: ' +
+      APP_URL
+    openWhatsAppShare(text)
   }
 
   function progressText(assignmentId: string): string {
@@ -244,6 +254,13 @@ function AdminAssignments() {
                 >
                   View submissions
                 </Link>
+                <button
+                  type='button'
+                  onClick={handleNotify}
+                  className='border border-gray-300 text-navy text-sm font-semibold rounded-lg px-3 py-1'
+                >
+                  Notify group on WhatsApp
+                </button>
                 {confirmId === a.id ? (
                   <>
                     <button

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase'
 import { settings } from '../config/settings'
+import { APP_URL, openWhatsAppShare } from '../config/whatsapp'
 import AttendanceChart from '../components/AttendanceChart'
 
 type Service = {
@@ -99,8 +100,8 @@ function MeetingLinkCard() {
     e.preventDefault()
     setFormError('')
     setMessage('')
-
     const clean = link.trim()
+
     const problem = checkMeetingLink(clean)
     if (problem !== '') {
       setFormError(problem)
@@ -209,6 +210,7 @@ function ServiceDetail({ service, onBack, onFinalizedChange }: DetailProps) {
           where('communityId', '==', settings.communityId),
           where('serviceId', '==', service.id)
         )
+
         const [memberSnap, attendanceSnap] = await Promise.all([
           getDocs(membersQuery),
           getDocs(attendanceQuery),
@@ -259,11 +261,23 @@ function ServiceDetail({ service, onBack, onFinalizedChange }: DetailProps) {
     return loading ? '...' : String(n)
   }
 
+  function handleNotify() {
+    const text =
+      'A meeting has been scheduled on ' +
+      settings.name +
+      ': ' +
+      service.title +
+      ', ' +
+      formatDate(service.date) +
+      '. Please log in to the app and tap Join meeting: ' +
+      APP_URL
+    openWhatsAppShare(text)
+  }
+
   async function mark(memberId: string, status: Status) {
     if (service.finalized) return
     setActionError('')
     setBusyId(memberId)
-
     try {
       await setDoc(doc(db, 'attendance', service.id + '_' + memberId), {
         communityId: settings.communityId,
@@ -347,7 +361,7 @@ function ServiceDetail({ service, onBack, onFinalizedChange }: DetailProps) {
             </button>
           </div>
         ) : (
-          <div className='mb-4'>
+          <div className='mb-4 flex flex-wrap items-center gap-2'>
             <button
               type='button'
               onClick={() => setConfirm('finalize')}
@@ -355,6 +369,13 @@ function ServiceDetail({ service, onBack, onFinalizedChange }: DetailProps) {
               className='bg-brand hover:bg-brand-dark text-white text-sm font-semibold rounded-lg px-4 py-2 disabled:opacity-60'
             >
               Finalize service
+            </button>
+            <button
+              type='button'
+              onClick={handleNotify}
+              className='border border-gray-300 bg-white text-navy text-sm font-semibold rounded-lg px-4 py-2'
+            >
+              Notify group on WhatsApp
             </button>
           </div>
         )}
@@ -514,7 +535,6 @@ function AdminAttendance() {
   async function handleCreate(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setFormError('')
-
     const cleanTitle = title.trim()
     if (cleanTitle.length < 2) {
       setFormError('Enter a title, for example Sunday Service')
@@ -600,6 +620,7 @@ function AdminAttendance() {
             {saving ? 'Creating...' : 'Create service'}
           </button>
         </form>
+
         {!loading && !error && <AttendanceChart services={services} />}
 
         <h2 className='font-display text-xl font-semibold text-navy mb-3'>Services</h2>
