@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+
 import { collection, getDocs, query, where } from 'firebase/firestore'
 import { db } from '../firebase'
 import { settings } from '../config/settings'
@@ -170,9 +170,9 @@ function AdminBirthdays() {
   return (
     <div className='min-h-screen bg-paper p-4'>
       <div className='max-w-3xl mx-auto'>
-        <Link to='/admin' className='text-sm text-brand'>Back to dashboard</Link>
+      
 
-        <h1 className='font-display text-3xl font-semibold text-navy mt-2'>Birthdays</h1>
+        <h1 className='font-display text-3xl font-semibold text-navy'>Birthdays</h1>
         <p className='text-sm text-gray-500 mt-1 mb-6'>Approved members, soonest first</p>
 
         {loading && <p className='text-gray-500'>Loading...</p>}

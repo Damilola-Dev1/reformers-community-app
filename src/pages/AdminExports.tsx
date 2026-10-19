@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { collection, getDocs, query, where } from 'firebase/firestore'
 import { db } from '../firebase'
 import { settings } from '../config/settings'
@@ -239,9 +238,9 @@ function AdminExports() {
   return (
     <div className='min-h-screen bg-paper p-4'>
       <div className='max-w-3xl mx-auto'>
-        <Link to='/admin' className='text-sm text-brand'>Back to dashboard</Link>
+       
 
-        <h1 className='font-display text-3xl font-semibold text-navy mt-2'>Exports</h1>
+        <h1 className='font-display text-3xl font-semibold text-navy'>Exports</h1>
         <p className='text-sm text-gray-500 mt-1 mb-6'>Download your data as Excel or PDF</p>
 
         {error && <p className='text-sm text-red-600 mb-4'>{error}</p>}

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
 import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase'
 import { settings } from '../config/settings'
@@ -580,9 +579,9 @@ function AdminAttendance() {
   return (
     <div className='min-h-screen bg-paper p-4'>
       <div className='max-w-3xl mx-auto'>
-        <Link to='/admin' className='text-sm text-brand'>Back to dashboard</Link>
+        
 
-        <h1 className='font-display text-3xl font-semibold text-navy mt-2'>Attendance</h1>
+        <h1 className='font-display text-3xl font-semibold text-navy'>Attendance</h1>
         <p className='text-sm text-gray-500 mt-1 mb-6'>Create a service, then mark who was present</p>
 
         <MeetingLinkCard />

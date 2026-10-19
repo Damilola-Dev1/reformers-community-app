@@ -71,7 +71,7 @@ function Icon({ paths }: { paths: string[] }) {
 
 function linkClass(isActive: boolean): string {
   return (
-    'block rounded-lg px-3 py-2 text-sm font-semibold whitespace-nowrap ' +
+    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold whitespace-nowrap ' +
     (isActive ? 'bg-brand text-white' : 'text-gray-200 hover:bg-white/10')
   )
 }
@@ -102,6 +102,7 @@ function AdminLayout() {
         <nav className='flex flex-col gap-1'>
           {links.map((l) => (
             <NavLink key={l.to} to={l.to} end={l.end} className={({ isActive }) => linkClass(isActive)}>
+              <Icon paths={l.icon} />
               {l.label}
             </NavLink>
           ))}
@@ -110,8 +111,9 @@ function AdminLayout() {
         <button
           type='button'
           onClick={() => signOut(auth)}
-          className='mt-auto text-left rounded-lg px-3 py-2 text-sm font-semibold text-gray-200 hover:bg-white/10'
+          className='mt-auto flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-gray-200 hover:bg-white/10'
         >
+          <Icon paths={logoutIcon} />
           Log out
         </button>
       </aside>

@@ -178,9 +178,7 @@ function AdminAssignments() {
   return (
     <div className='min-h-screen bg-paper p-4'>
       <div className='max-w-3xl mx-auto'>
-        <Link to='/admin' className='text-sm text-brand'>Back to dashboard</Link>
-
-        <h1 className='font-display text-3xl font-semibold text-navy mt-2'>Assignments</h1>
+        <h1 className='font-display text-3xl font-semibold text-navy'>Assignments</h1>
         <p className='text-sm text-gray-500 mt-1 mb-6'>Every approved member sees these on their home screen</p>
 
         <form onSubmit={handlePost} noValidate className='bg-white rounded-xl shadow p-4 mb-6'>

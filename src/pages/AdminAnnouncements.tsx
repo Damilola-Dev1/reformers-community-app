@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
 import { addDoc, collection, deleteDoc, doc, getDocs, query, serverTimestamp, where } from 'firebase/firestore'
 import { db } from '../firebase'
 import { settings } from '../config/settings'
@@ -60,7 +59,6 @@ function AdminAnnouncements() {
   async function handlePost(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setFormError('')
-
     const cleanTitle = title.trim()
     const cleanMessage = message.trim()
     if (cleanTitle.length < 2) {
@@ -97,6 +95,7 @@ function AdminAnnouncements() {
   async function handleDelete(id: string) {
     setFormError('')
     setDeletingId(id)
+
     try {
       await deleteDoc(doc(db, 'announcements', id))
       setItems((prev) => prev.filter((a) => a.id !== id))
@@ -112,9 +111,7 @@ function AdminAnnouncements() {
   return (
     <div className='min-h-screen bg-paper p-4'>
       <div className='max-w-3xl mx-auto'>
-        <Link to='/admin' className='text-sm text-brand'>Back to dashboard</Link>
-
-        <h1 className='font-display text-3xl font-semibold text-navy mt-2'>Announcements</h1>
+        <h1 className='font-display text-3xl font-semibold text-navy'>Announcements</h1>
         <p className='text-sm text-gray-500 mt-1 mb-6'>Every approved member sees these on their home screen</p>
 
         <form onSubmit={handlePost} noValidate className='bg-white rounded-xl shadow p-4 mb-6'>
