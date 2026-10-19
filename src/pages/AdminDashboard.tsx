@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { signOut } from 'firebase/auth'
 import { collection, getDocs, query, where } from 'firebase/firestore'
-import { auth, db } from '../firebase'
+import { db } from '../firebase'
 import { settings } from '../config/settings'
 import { useAuth } from '../auth/useAuth'
 import NextMeeting from '../components/NextMeeting'
@@ -164,20 +163,11 @@ function AdminDashboard() {
   return (
     <div className='min-h-screen bg-paper p-4'>
       <div className='max-w-3xl mx-auto'>
-        <div className='flex items-start justify-between gap-3'>
-          <div>
-            <h1 className='font-display text-3xl font-semibold text-navy'>
-              {firstName ? 'Welcome, ' + firstName : 'Welcome'}
-            </h1>
-            <p className='text-sm text-gray-500 mt-1 mb-6'>{settings.name} admin dashboard</p>
-          </div>
-          <button
-            type='button'
-            onClick={() => signOut(auth)}
-            className='border border-gray-300 text-navy text-sm font-semibold rounded-lg px-3 py-1'
-          >
-            Log out
-          </button>
+        <div>
+          <h1 className='font-display text-3xl font-semibold text-navy'>
+            {firstName ? 'Welcome, ' + firstName : 'Welcome'}
+          </h1>
+          <p className='text-sm text-gray-500 mt-1 mb-6'>{settings.name} admin dashboard</p>
         </div>
 
         {error && <p className='text-sm text-red-600 mb-4'>{error}</p>}
