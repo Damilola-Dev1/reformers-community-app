@@ -52,12 +52,15 @@ function validateEdit(form: EditForm): EditErrors {
   if (form.fullName.trim().length < 2) {
     found.fullName = 'Enter the full name'
   }
+
   if (!/^\+?[0-9]{10,15}$/.test(form.phone.trim())) {
     found.phone = 'Enter 10 to 15 digits, with an optional + at the start'
   }
+
   if (form.gender !== 'male' && form.gender !== 'female') {
     found.gender = 'Select a gender'
   }
+
   if (form.dateOfBirth === '') {
     found.dateOfBirth = 'Select a date of birth'
   } else {
@@ -67,9 +70,11 @@ function validateEdit(form: EditForm): EditErrors {
       found.dateOfBirth = 'Enter a real date of birth'
     }
   }
+
   if (form.location.trim().length < 2) {
     found.location = 'Enter the city and country'
   }
+
   if (form.maritalStatus === '') {
     found.maritalStatus = 'Select a marital status'
   }
@@ -104,6 +109,10 @@ function AdminMembers() {
   const [deleteError, setDeleteError] = useState('')
   const [deleteBusy, setDeleteBusy] = useState(false)
 
+  const [roleTarget, setRoleTarget] = useState<Member | null>(null)
+  const [roleError, setRoleError] = useState('')
+  const [roleBusy, setRoleBusy] = useState(false)
+
   useEffect(() => {
     async function load() {
       try {
@@ -117,7 +126,6 @@ function AdminMembers() {
         setLoading(false)
       }
     }
-
     load()
   }, [])
 
@@ -140,15 +148,27 @@ function AdminMembers() {
   }, [sorted, search])
 
   const pendingCount = useMemo(() => members.filter((m) => m.status === 'pending').length, [members])
+  const adminCount = useMemo(
+    () => members.filter((m) => m.role === 'admin' && m.status === 'approved').length,
+    [members]
+  )
 
   function canDelete(m: Member): boolean {
     return m.id !== user?.uid && m.role !== 'admin'
   }
 
+  function canChangeRole(m: Member): boolean {
+    if (m.status !== 'approved') return false
+    if (m.role === 'admin') {
+      if (m.id === user?.uid) return false
+      if (adminCount <= 1) return false
+    }
+    return true
+  }
+
   async function handleApprove(id: string) {
     setActionError('')
     setBusyId(id)
-
     try {
       await updateDoc(doc(db, 'members', id), { status: 'approved' })
       setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, status: 'approved' as const } : m)))
@@ -260,6 +280,41 @@ function AdminMembers() {
     }
   }
 
+  function openRole(m: Member) {
+    setRoleTarget(m)
+    setRoleError('')
+  }
+
+  function closeRole() {
+    setRoleTarget(null)
+    setRoleError('')
+  }
+
+  async function handleRoleChange() {
+    if (!roleTarget) return
+
+    if (!canChangeRole(roleTarget)) {
+      setRoleError('This change is not allowed. The last admin, or your own admin role, cannot be removed.')
+      return
+    }
+
+    const memberId = roleTarget.id
+    const newRole: Member['role'] = roleTarget.role === 'admin' ? 'member' : 'admin'
+    setRoleError('')
+    setRoleBusy(true)
+
+    try {
+      await updateDoc(doc(db, 'members', memberId), { role: newRole })
+      setMembers((prev) => prev.map((m) => (m.id === memberId ? { ...m, role: newRole } : m)))
+      closeRole()
+    } catch (err) {
+      console.error(err)
+      setRoleError('Could not change the role. Please try again.')
+    } finally {
+      setRoleBusy(false)
+    }
+  }
+
   return (
     <div className='min-h-screen bg-paper p-4'>
       <div className='max-w-3xl mx-auto'>
@@ -318,6 +373,15 @@ function AdminMembers() {
                       className='bg-brand hover:bg-brand-dark text-white text-sm font-semibold rounded-lg px-3 py-1 disabled:opacity-60'
                     >
                       {busyId === m.id ? 'Approving...' : 'Approve'}
+                    </button>
+                  )}
+                  {canChangeRole(m) && (
+                    <button
+                      type='button'
+                      onClick={() => openRole(m)}
+                      className='border border-gray-300 text-navy text-sm font-semibold rounded-lg px-3 py-1'
+                    >
+                      {m.role === 'admin' ? 'Remove admin' : 'Make admin'}
                     </button>
                   )}
                   <button
@@ -455,6 +519,42 @@ function AdminMembers() {
                 className='flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg py-2 disabled:opacity-60'
               >
                 {deleteBusy ? 'Deleting...' : 'Delete permanently'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {roleTarget && (
+        <div className='fixed inset-0 z-10 bg-black/40 flex items-center justify-center p-4'>
+          <div className='w-full max-w-sm bg-white rounded-xl shadow p-6'>
+            <h2 className='font-display text-2xl font-semibold text-navy'>
+              {roleTarget.role === 'admin' ? 'Remove admin role?' : 'Make this member an admin?'}
+            </h2>
+            <p className='text-sm text-gray-600 mt-3 mb-4'>
+              {roleTarget.role === 'admin'
+                ? roleTarget.fullName + ' (' + roleTarget.email + ') will become a normal member and will lose access to the admin area.'
+                : roleTarget.fullName + ' (' + roleTarget.email + ') will be able to see and change everything in the admin area.'}
+            </p>
+
+            {roleError && <p className='text-sm text-red-600 mb-3'>{roleError}</p>}
+
+            <div className='flex gap-3'>
+              <button
+                type='button'
+                onClick={closeRole}
+                disabled={roleBusy}
+                className='flex-1 border border-gray-300 text-navy font-semibold rounded-lg py-2 disabled:opacity-60'
+              >
+                Cancel
+              </button>
+              <button
+                type='button'
+                onClick={handleRoleChange}
+                disabled={roleBusy}
+                className='flex-1 bg-brand hover:bg-brand-dark text-white font-semibold rounded-lg py-2 disabled:opacity-60'
+              >
+                {roleBusy ? 'Saving...' : roleTarget.role === 'admin' ? 'Yes, remove admin' : 'Yes, make admin'}
               </button>
             </div>
           </div>
