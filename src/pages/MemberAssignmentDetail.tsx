@@ -5,12 +5,15 @@ import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firest
 import { auth, db } from '../firebase'
 import { settings } from '../config/settings'
 import { useAuth } from '../auth/useAuth'
+import { formatClosing, formatDeadline, phaseOf } from '../utils/deadline'
 
 type Assignment = {
   id: string
   title: string
   instructions: string
   dueDate: string
+  dueTime: string
+  extraHours: number
 }
 
 type Submission = {
@@ -19,17 +22,6 @@ type Submission = {
   status: string
   reviewNote: string
   createdAt: Date | null
-}
-
-function todayString(): string {
-  const n = new Date()
-  return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0')
-}
-
-function formatDue(value: string): string {
-  if (!value) return ''
-  const [y, m, d] = value.split('-').map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 function formatWhen(value: Date | null): string {
@@ -70,6 +62,8 @@ function MemberAssignmentDetail() {
           title: String(a.title ?? ''),
           instructions: String(a.instructions ?? ''),
           dueDate: String(a.dueDate ?? ''),
+          dueTime: String(a.dueTime ?? ''),
+          extraHours: Number(a.extraHours ?? 0) || 0,
         })
 
         const sSnap = await getDoc(doc(db, 'submissions', id + '_' + uid))
@@ -124,6 +118,11 @@ function MemberAssignmentDetail() {
 
     const resubmitting = submission !== null && submission.status === 'revision'
 
+    if (!resubmitting && assignment && phaseOf(assignment, Date.now()) === 'closed') {
+      setFormError('Submissions for this assignment are closed')
+      return
+    }
+
     setSaving(true)
     try {
       if (resubmitting) {
@@ -161,7 +160,8 @@ function MemberAssignmentDetail() {
     }
   }
 
-  const overdue = assignment !== null && assignment.dueDate !== '' && assignment.dueDate < todayString()
+  const phase = assignment ? phaseOf(assignment, Date.now()) : 'open'
+  const closed = phase === 'closed'
   const needsRevision = submission !== null && submission.status === 'revision'
   const approved = submission !== null && submission.status === 'approved'
 
@@ -177,17 +177,43 @@ function MemberAssignmentDetail() {
         {assignment && (
           <>
             <h1 className='font-display text-3xl font-semibold text-navy mt-2'>{assignment.title}</h1>
+
             {assignment.dueDate && (
-              <p className={'text-sm mt-1 ' + (overdue && !approved ? 'text-red-600 font-semibold' : 'text-gray-500')}>
-                {overdue && !approved ? 'Overdue: was due ' : 'Due '}
-                {formatDue(assignment.dueDate)}
-              </p>
+              <div className='mt-1'>
+                <p className={'text-sm ' + (phase === 'open' || approved ? 'text-gray-500' : 'text-red-600 font-semibold')}>
+                  {phase === 'open' || approved ? 'Due ' : 'Overdue: was due '}
+                  {formatDeadline(assignment)}
+                </p>
+                {assignment.extraHours > 0 && (
+                  <p className='text-xs text-gray-500 mt-1'>
+                    {'Extra time of ' + assignment.extraHours + 'h applies to everyone. Submissions close ' + formatClosing(assignment) + '.'}
+                  </p>
+                )}
+              </div>
             )}
 
             <div className='bg-white rounded-xl shadow p-4 mt-4'>
               <h2 className='font-display text-xl font-semibold text-navy mb-2'>Instructions</h2>
               <p className='text-sm text-gray-700 whitespace-pre-line'>{assignment.instructions}</p>
             </div>
+
+            {phase === 'extra' && !submission && (
+              <div className='bg-orange-50 border border-orange-200 rounded-xl p-4 mt-4'>
+                <p className='text-sm font-semibold text-orange-700 mb-1'>Extra time is running</p>
+                <p className='text-sm text-gray-700'>
+                  The deadline has passed, but you can still submit until {formatClosing(assignment)}.
+                </p>
+              </div>
+            )}
+
+            {closed && !submission && (
+              <div className='bg-red-50 border border-red-200 rounded-xl p-4 mt-4'>
+                <p className='text-sm font-semibold text-red-700 mb-1'>Submissions are closed</p>
+                <p className='text-sm text-gray-700'>
+                  The deadline and extra time for this assignment have passed. Please speak to the Admin if you need help.
+                </p>
+              </div>
+            )}
 
             {submission && !needsRevision && (
               <div className='bg-white rounded-xl shadow p-4 mt-4'>
@@ -221,7 +247,7 @@ function MemberAssignmentDetail() {
               </div>
             )}
 
-            {(!submission || needsRevision) && (
+            {((!submission && !closed) || needsRevision) && (
               <form onSubmit={handleSubmit} noValidate className='bg-white rounded-xl shadow p-4 mt-4'>
                 <h2 className='font-display text-xl font-semibold text-navy mb-3'>
                   {needsRevision ? 'Update your answer' : 'Your answer'}

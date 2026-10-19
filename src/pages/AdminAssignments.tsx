@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { addDoc, collection, deleteDoc, doc, getDocs, query, serverTimestamp, where } from 'firebase/firestore'
+import { addDoc, collection, deleteDoc, doc, getDocs, query, serverTimestamp, Timestamp, where } from 'firebase/firestore'
 import { db } from '../firebase'
 import { settings } from '../config/settings'
 import { APP_URL, openWhatsAppShare } from '../config/whatsapp'
+import { closesAtOf, deadlineOf, formatDeadline } from '../utils/deadline'
+import ExtendTime from '../components/ExtendTime'
 
 type Assignment = {
   id: string
   title: string
   instructions: string
   dueDate: string
+  dueTime: string
+  extraHours: number
   createdAt: Date | null
 }
 
@@ -22,12 +26,6 @@ type SubInfo = {
 function todayString(): string {
   const n = new Date()
   return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0')
-}
-
-function formatDue(value: string): string {
-  if (!value) return ''
-  const [y, m, d] = value.split('-').map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 function formatWhen(value: Date | null): string {
@@ -44,6 +42,8 @@ function AdminAssignments() {
   const [title, setTitle] = useState('')
   const [instructions, setInstructions] = useState('')
   const [dueDate, setDueDate] = useState('')
+  const [dueTime, setDueTime] = useState('')
+  const [extraHours, setExtraHours] = useState('')
   const [formError, setFormError] = useState('')
   const [saving, setSaving] = useState(false)
   const [confirmId, setConfirmId] = useState('')
@@ -61,6 +61,8 @@ function AdminAssignments() {
             title: String(data.title ?? ''),
             instructions: String(data.instructions ?? ''),
             dueDate: String(data.dueDate ?? ''),
+            dueTime: String(data.dueTime ?? ''),
+            extraHours: Number(data.extraHours ?? 0) || 0,
             createdAt:
               data.createdAt && typeof data.createdAt.toDate === 'function'
                 ? (data.createdAt.toDate() as Date)
@@ -115,6 +117,22 @@ function AdminAssignments() {
       setFormError('The due date cannot be in the past')
       return
     }
+    if (dueDate && !/^\d{2}:\d{2}$/.test(dueTime)) {
+      setFormError('Choose the due time')
+      return
+    }
+    const extra = dueDate ? Number(extraHours || '0') : 0
+    if (!Number.isInteger(extra) || extra < 0 || extra > 168) {
+      setFormError('Extra time must be a whole number of hours, from 0 to 168')
+      return
+    }
+    const deadlineInfo = { dueDate: dueDate, dueTime: dueTime, extraHours: extra }
+    const deadline = deadlineOf(deadlineInfo)
+    if (deadline && deadline.getTime() < Date.now()) {
+      setFormError('The due date and time cannot be in the past')
+      return
+    }
+    const closes = closesAtOf(deadlineInfo)
 
     setSaving(true)
     try {
@@ -123,15 +141,28 @@ function AdminAssignments() {
         title: cleanTitle,
         instructions: cleanInstructions,
         dueDate: dueDate,
+        dueTime: dueDate ? dueTime : '',
+        extraHours: extra,
+        closesAt: closes ? Timestamp.fromDate(closes) : null,
         createdAt: serverTimestamp(),
       })
       setItems((prev) => [
-        { id: ref.id, title: cleanTitle, instructions: cleanInstructions, dueDate: dueDate, createdAt: new Date() },
+        {
+          id: ref.id,
+          title: cleanTitle,
+          instructions: cleanInstructions,
+          dueDate: dueDate,
+          dueTime: dueDate ? dueTime : '',
+          extraHours: extra,
+          createdAt: new Date(),
+        },
         ...prev,
       ])
       setTitle('')
       setInstructions('')
       setDueDate('')
+      setDueTime('')
+      setExtraHours('')
     } catch (err) {
       console.error(err)
       setFormError('Could not post the assignment. Please try again.')
@@ -204,7 +235,7 @@ function AdminAssignments() {
             />
           </div>
 
-          <div className='mb-4'>
+          <div className='mb-3'>
             <label className='block text-sm font-medium text-navy mb-1'>Due date (optional)</label>
             <input
               type='date'
@@ -213,6 +244,32 @@ function AdminAssignments() {
               onChange={(e) => setDueDate(e.target.value)}
               className='rounded-lg border border-gray-300 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand'
             />
+          </div>
+
+          <div className='mb-3'>
+            <label className='block text-sm font-medium text-navy mb-1'>Due time (needed if you set a due date)</label>
+            <input
+              type='time'
+              value={dueTime}
+              onChange={(e) => setDueTime(e.target.value)}
+              className='rounded-lg border border-gray-300 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand'
+            />
+          </div>
+
+          <div className='mb-4'>
+            <label className='block text-sm font-medium text-navy mb-1'>Extra time after the deadline, in hours (optional)</label>
+            <input
+              type='number'
+              min={0}
+              max={168}
+              value={extraHours}
+              onChange={(e) => setExtraHours(e.target.value)}
+              placeholder='0'
+              className='w-32 rounded-lg border border-gray-300 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand'
+            />
+            <p className='text-xs text-gray-400 mt-1'>
+              Applies to everyone. Submissions close after the extra time. You can add more extra time later, once the due time has passed.
+            </p>
           </div>
 
           {formError && <p className='text-sm text-red-600 mb-3'>{formError}</p>}
@@ -240,10 +297,18 @@ function AdminAssignments() {
               <p className='font-semibold text-navy'>{a.title}</p>
               <p className='text-xs text-gray-400 mb-2'>
                 Posted {formatWhen(a.createdAt)}
-                {a.dueDate ? ' · Due ' + formatDue(a.dueDate) : ' · No due date'}
+                {a.dueDate ? ' · Due ' + formatDeadline(a) : ' · No due date'}
+                {a.dueDate && a.extraHours > 0 ? ' · ' + a.extraHours + 'h extra time' : ''}
               </p>
               <p className='text-sm text-gray-700 whitespace-pre-line'>{a.instructions}</p>
               <p className='text-sm font-semibold text-navy mt-3'>{loading ? '...' : progressText(a.id)}</p>
+
+              <ExtendTime
+                assignment={a}
+                onExtended={(h) =>
+                  setItems((prev) => prev.map((x) => (x.id === a.id ? { ...x, extraHours: h } : x)))
+                }
+              />
 
               <div className='mt-3 flex flex-wrap items-center gap-2'>
                 <Link

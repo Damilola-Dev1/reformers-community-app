@@ -3,36 +3,30 @@ import { Link } from 'react-router-dom'
 import { collection, getDocs, query, where } from 'firebase/firestore'
 import { auth, db } from '../firebase'
 import { settings } from '../config/settings'
+import { formatDeadline, phaseOf } from '../utils/deadline'
 
 type Assignment = {
   id: string
   title: string
   dueDate: string
+  dueTime: string
+  extraHours: number
   createdAt: Date | null
 }
 
-function todayString(): string {
-  const n = new Date()
-  return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0')
-}
-
-function formatDue(value: string): string {
-  if (!value) return ''
-  const [y, m, d] = value.split('-').map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-}
-
-function tagLabel(status: string | undefined): string {
+function tagLabel(status: string | undefined, closed: boolean): string {
   if (status === 'approved') return 'Approved'
   if (status === 'revision') return 'Needs revision'
   if (status === 'submitted') return 'Submitted'
+  if (closed) return 'Closed'
   return 'Not submitted'
 }
 
-function tagClass(status: string | undefined): string {
+function tagClass(status: string | undefined, closed: boolean): string {
   if (status === 'approved') return 'bg-blue-100 text-blue-700'
   if (status === 'revision') return 'bg-orange-100 text-orange-700'
   if (status === 'submitted') return 'bg-green-100 text-green-700'
+  if (closed) return 'bg-red-100 text-red-700'
   return 'bg-gray-100 text-gray-600'
 }
 
@@ -53,6 +47,8 @@ function MemberAssignments() {
             id: d.id,
             title: String(data.title ?? ''),
             dueDate: String(data.dueDate ?? ''),
+            dueTime: String(data.dueTime ?? ''),
+            extraHours: Number(data.extraHours ?? 0) || 0,
             createdAt:
               data.createdAt && typeof data.createdAt.toDate === 'function'
                 ? (data.createdAt.toDate() as Date)
@@ -86,19 +82,19 @@ function MemberAssignments() {
     load()
   }, [])
 
-  const today = todayString()
+  const now = Date.now()
 
   return (
     <div className='bg-white rounded-xl shadow p-4'>
       <h2 className='font-display text-xl font-semibold text-navy mb-2'>Assignments</h2>
 
       {loading && (
-  <div className='space-y-2 animate-pulse'>
-    <div className='h-4 bg-gray-200 rounded w-2/3' />
-    <div className='h-3 bg-gray-100 rounded w-1/3' />
-    <div className='h-3 bg-gray-100 rounded w-full' />
-  </div>
-)}
+        <div className='space-y-2 animate-pulse'>
+          <div className='h-4 bg-gray-200 rounded w-2/3' />
+          <div className='h-3 bg-gray-100 rounded w-1/3' />
+          <div className='h-3 bg-gray-100 rounded w-full' />
+        </div>
+      )}
       {error && <p className='text-sm text-red-600'>{error}</p>}
       {!loading && !error && items.length === 0 && (
         <p className='text-sm text-gray-500'>No assignments yet.</p>
@@ -107,7 +103,9 @@ function MemberAssignments() {
       <div className='space-y-2'>
         {items.map((a) => {
           const status = statuses.get(a.id)
-          const overdue = a.dueDate !== '' && a.dueDate < today && (status === undefined || status === 'revision')
+          const phase = phaseOf(a, now)
+          const closed = phase === 'closed' && status === undefined
+          const overdue = phase !== 'open' && (status === undefined || status === 'revision')
           return (
             <Link
               key={a.id}
@@ -117,11 +115,14 @@ function MemberAssignments() {
               <div className='min-w-0'>
                 <p className='font-semibold text-navy'>{a.title}</p>
                 <p className={'text-xs ' + (overdue ? 'text-red-600 font-semibold' : 'text-gray-400')}>
-                  {a.dueDate ? (overdue ? 'Overdue: was due ' : 'Due ') + formatDue(a.dueDate) : 'No due date'}
+                  {a.dueDate ? (overdue ? 'Overdue: was due ' : 'Due ') + formatDeadline(a) : 'No due date'}
                 </p>
+                {phase === 'extra' && status === undefined && (
+                  <p className='text-xs text-orange-600'>Extra time is running</p>
+                )}
               </div>
-              <span className={'shrink-0 text-xs font-semibold rounded-full px-2 py-1 ' + tagClass(status)}>
-                {tagLabel(status)}
+              <span className={'shrink-0 text-xs font-semibold rounded-full px-2 py-1 ' + tagClass(status, closed)}>
+                {tagLabel(status, closed)}
               </span>
             </Link>
           )

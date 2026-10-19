@@ -3,12 +3,15 @@ import { Link, useParams } from 'react-router-dom'
 import { collection, doc, getDoc, getDocs, query, serverTimestamp, updateDoc, where } from 'firebase/firestore'
 import { db } from '../firebase'
 import { settings } from '../config/settings'
+import { deadlineOf, formatDeadline } from '../utils/deadline'
 
 type Assignment = {
   id: string
   title: string
   instructions: string
   dueDate: string
+  dueTime: string
+  extraHours: number
 }
 
 type Sub = {
@@ -25,12 +28,6 @@ type Sub = {
 type Person = {
   id: string
   fullName: string
-}
-
-function formatDue(value: string): string {
-  if (!value) return ''
-  const [y, m, d] = value.split('-').map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 function formatWhen(value: Date | null): string {
@@ -88,6 +85,8 @@ function AdminAssignmentReview() {
           title: String(a.title ?? ''),
           instructions: String(a.instructions ?? ''),
           dueDate: String(a.dueDate ?? ''),
+          dueTime: String(a.dueTime ?? ''),
+          extraHours: Number(a.extraHours ?? 0) || 0,
         })
 
         const subQuery = query(
@@ -181,6 +180,12 @@ function AdminAssignmentReview() {
     }
   }
 
+  function isLate(s: Sub): boolean {
+    if (!assignment || !s.createdAt) return false
+    const deadline = deadlineOf(assignment)
+    return deadline !== null && s.createdAt.getTime() > deadline.getTime()
+  }
+
   const submittedIds = new Set(subs.map((s) => s.memberId))
   const notSubmitted = people.filter((p) => !submittedIds.has(p.id))
 
@@ -197,7 +202,8 @@ function AdminAssignmentReview() {
           <>
             <h1 className='font-display text-3xl font-semibold text-navy mt-2'>{assignment.title}</h1>
             <p className='text-sm text-gray-500 mt-1'>
-              {assignment.dueDate ? 'Due ' + formatDue(assignment.dueDate) : 'No due date'}
+              {assignment.dueDate ? 'Due ' + formatDeadline(assignment) : 'No due date'}
+              {assignment.dueDate && assignment.extraHours > 0 ? ' · ' + assignment.extraHours + 'h extra time' : ''}
               {' · '}
               {subs.length} of {people.length} members submitted
             </p>
@@ -221,7 +227,10 @@ function AdminAssignmentReview() {
                       {statusLabel(s.status)}
                     </span>
                   </div>
-                  <p className='text-xs text-gray-400 mb-2'>Sent {formatWhen(s.createdAt)}</p>
+                  <p className='text-xs text-gray-400 mb-2'>
+                    Sent {formatWhen(s.createdAt)}
+                    {isLate(s) ? ' · Late (after the deadline)' : ''}
+                  </p>
                   <p className='text-sm text-gray-700 whitespace-pre-line'>{s.text}</p>
                   {s.link && (
                     <p className='text-sm mt-3'>
