@@ -6,7 +6,6 @@ import { auth } from '../firebase'
 import { settings } from '../config/settings'
 import { useAuth } from '../auth/useAuth'
 import { homeFor } from '../auth/authContext'
-import VerseOfTheDay from '../components/VerseOfTheDay'
 import AuthBackground from '../components/AuthBackground'
 
 const fieldClass = 'w-full rounded-lg border border-gray-300 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand'
@@ -148,8 +147,6 @@ function Login() {
             New here? <Link to='/register' className='text-brand'>Join {settings.name}</Link>
           </p>
         </form>
-
-        <VerseOfTheDay />
       </div>
     </AuthBackground>
   )
