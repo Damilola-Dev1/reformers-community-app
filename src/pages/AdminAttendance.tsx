@@ -10,6 +10,7 @@ type Service = {
   id: string
   title: string
   date: string
+  time: string
   finalized: boolean
   createdAt: string
 }
@@ -38,6 +39,15 @@ function formatDate(value: string): string {
     month: 'long',
     year: 'numeric',
   })
+}
+
+function formatTime(value: string): string {
+  const match = /^(\d{2}):(\d{2})$/.exec(value)
+  if (!match) return ''
+  const hour = Number(match[1])
+  const suffix = hour >= 12 ? 'PM' : 'AM'
+  const hour12 = hour % 12 === 0 ? 12 : hour % 12
+  return hour12 + ':' + match[2] + ' ' + suffix
 }
 
 function TotalCard({ label, value, note }: { label: string; value: string; note?: string }) {
@@ -268,6 +278,7 @@ function ServiceDetail({ service, onBack, onFinalizedChange }: DetailProps) {
       service.title +
       ', ' +
       formatDate(service.date) +
+      (service.time ? ' at ' + formatTime(service.time) : '') +
       '. Please log in to the app and tap Join meeting: ' +
       APP_URL
     openWhatsAppShare(text)
@@ -346,7 +357,7 @@ function ServiceDetail({ service, onBack, onFinalizedChange }: DetailProps) {
         </button>
 
         <h1 className='font-display text-3xl font-semibold text-navy mt-2'>{service.title}</h1>
-        <p className='text-sm text-gray-500 mt-1 mb-4'>{formatDate(service.date)}</p>
+        <p className='text-sm text-gray-500 mt-1 mb-4'>{formatDate(service.date)}{service.time ? ' at ' + formatTime(service.time) : ''}</p>
 
         {service.finalized ? (
           <div className='bg-green-50 rounded-lg p-3 mb-4 flex items-center justify-between gap-3'>
@@ -485,6 +496,7 @@ function AdminAttendance() {
   const [error, setError] = useState('')
   const [title, setTitle] = useState('')
   const [date, setDate] = useState(todayLocal())
+  const [time, setTime] = useState('')
   const [formError, setFormError] = useState('')
   const [saving, setSaving] = useState(false)
   const [openService, setOpenService] = useState<Service | null>(null)
@@ -501,6 +513,7 @@ function AdminAttendance() {
               id: d.id,
               title: String(data.title ?? ''),
               date: String(data.date ?? ''),
+              time: String(data.time ?? ''),
               finalized: data.finalized === true,
               createdAt:
                 data.createdAt && typeof data.createdAt.toDate === 'function'
@@ -543,6 +556,10 @@ function AdminAttendance() {
       setFormError('Choose the date of the service')
       return
     }
+    if (!/^\d{2}:\d{2}$/.test(time)) {
+      setFormError('Choose the start time of the service')
+      return
+    }
 
     setSaving(true)
     try {
@@ -550,14 +567,16 @@ function AdminAttendance() {
         communityId: settings.communityId,
         title: cleanTitle,
         date: date,
+        time: time,
         finalized: false,
         createdAt: serverTimestamp(),
       })
       setServices((prev) => [
-        { id: ref.id, title: cleanTitle, date: date, finalized: false, createdAt: new Date().toISOString() },
+        { id: ref.id, title: cleanTitle, date: date, time: time, finalized: false, createdAt: new Date().toISOString() },
         ...prev,
       ])
       setTitle('')
+      setTime('')
     } catch (err) {
       console.error(err)
       setFormError('Could not create the service. Please try again.')
@@ -579,8 +598,6 @@ function AdminAttendance() {
   return (
     <div className='min-h-screen bg-paper p-4'>
       <div className='max-w-3xl mx-auto'>
-        
-
         <h1 className='font-display text-3xl font-semibold text-navy'>Attendance</h1>
         <p className='text-sm text-gray-500 mt-1 mb-6'>Create a service, then mark who was present</p>
 
@@ -605,6 +622,16 @@ function AdminAttendance() {
               type='date'
               value={date}
               onChange={(e) => setDate(e.target.value)}
+              className='w-full rounded-lg border border-gray-300 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand'
+            />
+          </div>
+
+          <div className='mb-4'>
+            <label className='block text-sm font-medium text-navy mb-1'>Start time</label>
+            <input
+              type='time'
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
               className='w-full rounded-lg border border-gray-300 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand'
             />
           </div>
@@ -641,7 +668,7 @@ function AdminAttendance() {
             >
               <div className='min-w-0'>
                 <p className='font-semibold text-navy truncate'>{s.title}</p>
-                <p className='text-sm text-gray-500'>{formatDate(s.date)}</p>
+                <p className='text-sm text-gray-500'>{formatDate(s.date)}{s.time ? ' at ' + formatTime(s.time) : ''}</p>
               </div>
               <span
                 className={
