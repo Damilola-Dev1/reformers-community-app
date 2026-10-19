@@ -336,8 +336,6 @@ function Register() {
                   <option value=''>Select one</option>
                   <option value='single'>Single</option>
                   <option value='married'>Married</option>
-                  <option value='divorced'>Divorced</option>
-                  <option value='widowed'>Widowed</option>
                 </select>
                 {errors.maritalStatus && <p className='text-sm text-red-600 mt-1'>{errors.maritalStatus}</p>}
               </div>
@@ -441,7 +439,7 @@ function Register() {
                   own, but other members cannot.
                 </p>
                 <p>
-                  Your membership starts after a leader approves your registration.
+                  Your membership starts after the Admin approves your registration.
                 </p>
               </div>
 

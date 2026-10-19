@@ -59,7 +59,7 @@ function Pending() {
           </p>
 
           <p className='text-sm text-gray-600 mb-6'>
-            A leader will review it and approve your membership. You can log in again later to check.
+            The Admin will review it and approve your membership. You can log in again later to check.
           </p>
 
           <div className='flex gap-3'>
