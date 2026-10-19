@@ -7,6 +7,7 @@ import { settings } from '../config/settings'
 import { useAuth } from '../auth/useAuth'
 import { homeFor } from '../auth/authContext'
 import VerseOfTheDay from '../components/VerseOfTheDay'
+import AuthBackground from '../components/AuthBackground'
 
 const fieldClass = 'w-full rounded-lg border border-gray-300 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand'
 
@@ -82,16 +83,17 @@ function Login() {
   }
 
   return (
-    <div className='min-h-screen bg-paper flex items-center justify-center p-4'>
+    <AuthBackground>
       <div className='w-full max-w-md space-y-4'>
-        <div className='text-center'>
+        <div className='relative text-center'>
+          <div aria-hidden='true' className='auth-glow' />
           <img
             src='/logo.png'
             alt={settings.name + ' logo'}
             onError={(e) => {
               e.currentTarget.style.display = 'none'
             }}
-            className='mx-auto h-20 w-auto'
+            className='relative mx-auto h-44 w-auto mix-blend-multiply'
           />
         </div>
 
@@ -149,7 +151,7 @@ function Login() {
 
         <VerseOfTheDay />
       </div>
-    </div>
+    </AuthBackground>
   )
 }
 

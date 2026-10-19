@@ -48,3 +48,72 @@ p.shake { animation: shake 0.4s ease-in-out; }
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Login background: drifting shapes and a glow behind the logo */
+@keyframes drift-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(60px, 40px) scale(1.12); }
+}
+
+@keyframes drift-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-70px, -30px) scale(1.1); }
+}
+
+@keyframes drift-c {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, -50px) scale(1.15); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(0.95); }
+  50% { opacity: 0.9; transform: scale(1.08); }
+}
+
+.auth-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  pointer-events: none;
+  will-change: transform;
+}
+
+.auth-blob-1 {
+  top: -8rem;
+  left: -6rem;
+  width: 26rem;
+  height: 26rem;
+  background: rgba(122, 16, 48, 0.2);
+  animation: drift-a 22s ease-in-out infinite;
+}
+
+.auth-blob-2 {
+  bottom: -9rem;
+  right: -7rem;
+  width: 28rem;
+  height: 28rem;
+  background: rgba(249, 115, 22, 0.18);
+  animation: drift-b 26s ease-in-out infinite;
+}
+
+.auth-blob-3 {
+  top: 35%;
+  left: 55%;
+  width: 20rem;
+  height: 20rem;
+  background: rgba(122, 16, 48, 0.12);
+  animation: drift-c 30s ease-in-out infinite;
+}
+
+.auth-glow {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 15rem;
+  height: 15rem;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.35) 0%, rgba(122, 16, 48, 0.12) 45%, transparent 70%);
+  filter: blur(18px);
+  pointer-events: none;
+  animation: glow-pulse 5s ease-in-out infinite;
+}

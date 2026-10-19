@@ -30,9 +30,9 @@ function AdminLayout() {
       <aside className='hidden md:flex md:flex-col md:w-56 md:shrink-0 md:sticky md:top-0 md:h-screen bg-navy p-4'>
         <div className='mb-6'>
           <div className='bg-white rounded-lg p-2 w-fit mb-3'>
-            <img src='/logo.png' alt={settings.name + ' logo'} onError={hideBroken} className='h-10 w-auto' />
+            <img src='/logo.png' alt={settings.name + ' logo'} onError={hideBroken} className='h-28 w-auto' />
           </div>
-          <p className='font-display text-lg font-semibold text-white'>{settings.name}</p>
+          
         </div>
         <nav className='flex flex-col gap-1'>
           {links.map((l) => (
