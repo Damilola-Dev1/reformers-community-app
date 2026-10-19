@@ -93,7 +93,7 @@ function Login() {
             onError={(e) => {
               e.currentTarget.style.display = 'none'
             }}
-            className='relative mx-auto h-44 w-auto mix-blend-multiply'
+            className='relative mx-auto h-44 w-auto'
           />
         </div>
 

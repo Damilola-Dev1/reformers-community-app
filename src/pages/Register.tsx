@@ -216,7 +216,7 @@ function Register() {
             onError={(e) => {
               e.currentTarget.style.display = 'none'
             }}
-            className='relative mx-auto h-28 w-auto mix-blend-multiply'
+            className='relative mx-auto h-28 w-auto'
           />
         </div>
 

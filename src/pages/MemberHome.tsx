@@ -23,7 +23,7 @@ function MemberHome() {
               onError={(e) => {
                 e.currentTarget.style.display = 'none'
               }}
-              className='h-16 w-16 shrink-0 object-contain mix-blend-multiply'
+              className='h-16 w-16 shrink-0 object-contain'
             />
             <div>
               <h1 className='font-display text-3xl font-semibold text-navy'>
