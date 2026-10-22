@@ -43,7 +43,11 @@ function Login() {
       await signInWithEmailAndPassword(auth, email.trim().toLowerCase(), password)
     } catch (err) {
       const code = (err as { code?: string }).code
-      if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
+      if (
+        code === 'auth/invalid-credential' ||
+        code === 'auth/wrong-password' ||
+        code === 'auth/user-not-found'
+      ) {
         fail('Wrong email or password')
       } else if (code === 'auth/too-many-requests') {
         fail('Too many attempts. Wait a few minutes and try again.')
@@ -69,7 +73,9 @@ function Login() {
 
     try {
       await sendPasswordResetEmail(auth, email.trim().toLowerCase())
-      setInfo('If this email is registered with us, a password reset link is on its way. Please check your inbox and your spam folder.')
+      setInfo(
+        'If this email is registered with us, a password reset link is on its way. Please check your inbox and your spam folder.'
+      )
     } catch (err) {
       const code = (err as { code?: string }).code
       if (code === 'auth/network-request-failed') {
@@ -83,70 +89,92 @@ function Login() {
 
   return (
     <AuthBackground>
-      <div className='w-full max-w-md space-y-4'>
-        <div className='relative text-center'>
-          <div aria-hidden='true' className='auth-glow' />
-          <img
-            src='/logo.png'
-            alt={settings.name + ' logo'}
-            onError={(e) => {
-              e.currentTarget.style.display = 'none'
-            }}
-            className='relative mx-auto h-44 w-auto'
-          />
+      <div className="fixed inset-0 z-10 flex overflow-y-auto">
+        <div className="md:hidden fixed top-0 inset-x-0 h-2 bg-navy z-20"></div>
+
+        <div className="flex w-full md:w-1/2 p-6 sm:p-10 bg-white">
+          <form onSubmit={handleSubmit} noValidate className="w-full max-w-sm m-auto">
+            <img
+              src="/logo.png"
+              alt={`${settings.name} logo`}
+              onError={(e) => {
+                e.currentTarget.style.display = 'none'
+              }}
+              className="mx-auto md:mx-0 h-28 w-auto mb-8"
+            />
+
+            <h1 className="font-display text-3xl font-semibold text-navy">Welcome back</h1>
+            <p className="text-sm text-gray-500 mt-1 mb-8">
+              Log in to continue to your community.
+            </p>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-navy mb-1">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                className={fieldClass}
+              />
+            </div>
+
+            <div className="mb-2">
+              <label className="block text-sm font-medium text-navy mb-1">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                className={fieldClass}
+              />
+            </div>
+
+            <div className="mb-4 text-right">
+              <button
+                type="button"
+                onClick={handleReset}
+                className="text-sm text-brand hover:underline"
+              >
+                Forgot password?
+              </button>
+            </div>
+
+            {error && (
+              <p key={errorKey} className="text-sm text-red-600 mb-3 shake">
+                {error}
+              </p>
+            )}
+            {info && <p className="text-sm text-green-700 mb-3">{info}</p>}
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full bg-brand hover:bg-brand-dark text-white font-semibold rounded-lg py-2 disabled:opacity-60 transition-colors"
+            >
+              {submitting ? 'Logging in...' : 'Log in'}
+            </button>
+
+            <p className="text-sm text-gray-500 mt-4 text-center">
+              New here?{' '}
+              <Link to="/register" className="text-brand hover:underline">
+                Join {settings.name}
+              </Link>
+            </p>
+          </form>
         </div>
 
-        <form onSubmit={handleSubmit} noValidate className='bg-white rounded-xl shadow p-6'>
-          <h1 className='font-display text-3xl font-semibold text-navy'>Welcome back</h1>
-          <p className='text-sm text-gray-500 mt-1 mb-6'>Log in to {settings.name}</p>
-
-          <div className='mb-4'>
-            <label className='block text-sm font-medium text-navy mb-1'>Email</label>
-            <input
-              type='email'
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete='email'
-              className={fieldClass}
-            />
-          </div>
-
-          <div className='mb-2'>
-            <label className='block text-sm font-medium text-navy mb-1'>Password</label>
-            <input
-              type='password'
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete='current-password'
-              className={fieldClass}
-            />
-          </div>
-
-          <div className='mb-4 text-right'>
-            <button type='button' onClick={handleReset} className='text-sm text-brand'>
-              Forgot password?
-            </button>
-          </div>
-
-          {error && (
-            <p key={errorKey} className='text-sm text-red-600 mb-3 shake'>
-              {error}
+        <div className="hidden md:flex md:w-1/2 items-center justify-center bg-navy text-white p-16">
+          <div className="max-w-md">
+            <div className="h-1 w-12 bg-brand rounded-full mb-8"></div>
+            <p className="font-display text-4xl font-semibold leading-tight">
+              A community of believers growing together, walking with God.
             </p>
-          )}
-          {info && <p className='text-sm text-green-700 mb-3'>{info}</p>}
-
-          <button
-            type='submit'
-            disabled={submitting}
-            className='w-full bg-brand hover:bg-brand-dark text-white font-semibold rounded-lg py-2 disabled:opacity-60'
-          >
-            {submitting ? 'Logging in...' : 'Log in'}
-          </button>
-
-          <p className='text-sm text-gray-500 mt-4 text-center'>
-            New here? <Link to='/register' className='text-brand'>Join {settings.name}</Link>
-          </p>
-        </form>
+            <p className="text-base mt-6 text-white/70">
+              Becoming more like Christ every day.
+            </p>
+          </div>
+        </div>
       </div>
     </AuthBackground>
   )

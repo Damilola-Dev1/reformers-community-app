@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { ChangeEvent, FormEvent } from 'react'
+import type { ChangeEvent, FormEvent, ReactNode } from 'react'
 import type { DocumentData } from 'firebase/firestore'
 import { collection, deleteDoc, doc, getDocs, query, updateDoc, where } from 'firebase/firestore'
+
 import { db } from '../firebase'
 import { settings } from '../config/settings'
 import { useAuth } from '../auth/useAuth'
@@ -18,8 +19,62 @@ type EditForm = {
 }
 
 type EditErrors = Partial<Record<keyof EditForm, string>>
+type FilterKey = 'all' | 'pending' | 'approved'
 
 const baseField = 'w-full rounded-lg border px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand'
+
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter((p) => p !== '')
+  if (parts.length === 0) return '?'
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[1][0]).toUpperCase()
+}
+
+function SmallIcon({ children }: { children: ReactNode }) {
+  return (
+    <svg
+      width='16'
+      height='16'
+      viewBox='0 0 24 24'
+      fill='none'
+      stroke='currentColor'
+      strokeWidth='2'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      className='shrink-0'
+    >
+      {children}
+    </svg>
+  )
+}
+
+function MailIcon() {
+  return (
+    <SmallIcon>
+      <rect x='2' y='4' width='20' height='16' rx='2' />
+      <path d='m22 7-10 7L2 7' />
+    </SmallIcon>
+  )
+}
+
+function PhoneIcon() {
+  return (
+    <SmallIcon>
+      <path d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z' />
+    </SmallIcon>
+  )
+}
+
+function CalendarIcon() {
+  return (
+    <SmallIcon>
+      <rect x='3' y='4' width='18' height='18' rx='2' />
+      <line x1='16' y1='2' x2='16' y2='6' />
+      <line x1='8' y1='2' x2='8' y2='6' />
+      <line x1='3' y1='10' x2='21' y2='10' />
+    </SmallIcon>
+  )
+}
 
 function toMember(id: string, d: DocumentData): Member {
   return {
@@ -47,19 +102,15 @@ function toMember(id: string, d: DocumentData): Member {
 
 function validateEdit(form: EditForm): EditErrors {
   const found: EditErrors = {}
-
   if (form.fullName.trim().length < 2) {
     found.fullName = 'Enter the full name'
   }
-
   if (!/^\+?[0-9]{10,15}$/.test(form.phone.trim())) {
     found.phone = 'Enter 10 to 15 digits, with an optional + at the start'
   }
-
   if (form.gender !== 'male' && form.gender !== 'female') {
     found.gender = 'Select a gender'
   }
-
   if (form.dateOfBirth === '') {
     found.dateOfBirth = 'Select a date of birth'
   } else {
@@ -69,15 +120,12 @@ function validateEdit(form: EditForm): EditErrors {
       found.dateOfBirth = 'Enter a real date of birth'
     }
   }
-
   if (form.location.trim().length < 2) {
     found.location = 'Enter the city and country'
   }
-
   if (form.maritalStatus === '') {
     found.maritalStatus = 'Select a marital status'
   }
-
   return found
 }
 
@@ -89,6 +137,7 @@ function AdminMembers() {
   const [actionError, setActionError] = useState('')
   const [busyId, setBusyId] = useState('')
   const [search, setSearch] = useState('')
+  const [filter, setFilter] = useState<FilterKey>('all')
 
   const [editing, setEditing] = useState<Member | null>(null)
   const [editForm, setEditForm] = useState<EditForm>({
@@ -137,20 +186,29 @@ function AdminMembers() {
 
   const visible = useMemo(() => {
     const term = search.trim().toLowerCase()
-    if (term === '') return sorted
-    return sorted.filter(
-      (m) =>
+    return sorted.filter((m) => {
+      if (filter !== 'all' && m.status !== filter) return false
+      if (term === '') return true
+      return (
         m.fullName.toLowerCase().includes(term) ||
         m.email.toLowerCase().includes(term) ||
         m.phone.includes(term)
-    )
-  }, [sorted, search])
+      )
+    })
+  }, [sorted, search, filter])
 
   const pendingCount = useMemo(() => members.filter((m) => m.status === 'pending').length, [members])
+  const approvedCount = useMemo(() => members.filter((m) => m.status === 'approved').length, [members])
   const adminCount = useMemo(
     () => members.filter((m) => m.role === 'admin' && m.status === 'approved').length,
     [members]
   )
+
+  const filterOptions: { key: FilterKey; label: string; count: number }[] = [
+    { key: 'all', label: 'All', count: members.length },
+    { key: 'pending', label: 'Pending', count: pendingCount },
+    { key: 'approved', label: 'Approved', count: approvedCount },
+  ]
 
   function canDelete(m: Member): boolean {
     return m.id !== user?.uid && m.role !== 'admin'
@@ -327,8 +385,25 @@ function AdminMembers() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder='Search by name, email or phone'
-          className='w-full rounded-lg border border-gray-300 px-3 py-2 bg-white mb-4 focus:outline-none focus:ring-2 focus:ring-brand'
+          className='w-full rounded-lg border border-gray-300 px-3 py-2 bg-white mb-3 focus:outline-none focus:ring-2 focus:ring-brand'
         />
+
+        <div className='flex flex-wrap gap-2 mb-4'>
+          {filterOptions.map((option) => (
+            <button
+              key={option.key}
+              type='button'
+              onClick={() => setFilter(option.key)}
+              className={
+                filter === option.key
+                  ? 'rounded-full bg-navy text-white text-sm font-semibold px-4 py-1.5'
+                  : 'rounded-full border border-gray-300 bg-white text-navy text-sm font-semibold px-4 py-1.5'
+              }
+            >
+              {option.label} ({option.count})
+            </button>
+          ))}
+        </div>
 
         {loading && <p className='text-gray-500'>Loading...</p>}
         {error && <p className='text-sm text-red-600'>{error}</p>}
@@ -339,65 +414,98 @@ function AdminMembers() {
         )}
 
         {!loading && !error && members.length > 0 && visible.length === 0 && (
-          <p className='text-gray-500'>No members match your search.</p>
+          <p className='text-gray-500'>No members match your search or filter.</p>
         )}
 
         <div className='space-y-3'>
           {visible.map((m) => (
-            <div key={m.id} className='bg-white rounded-xl shadow p-4 flex items-center justify-between gap-3'>
-              <div className='min-w-0'>
-                <p className='font-semibold text-navy truncate'>{m.fullName}</p>
-                <p className='text-sm text-gray-500 truncate'>{m.email}</p>
-                <p className='text-sm text-gray-500'>{m.phone}</p>
+            <div key={m.id} className='bg-white rounded-xl shadow p-4'>
+              <div className='flex items-center gap-3'>
+                <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-navy/10 text-navy font-display font-semibold'>
+                  {getInitials(m.fullName)}
+                </div>
+                <div className='min-w-0'>
+                  <p className='font-semibold text-navy break-words'>{m.fullName}</p>
+                  <div className='mt-1 flex flex-wrap gap-1.5'>
+                    <span
+                      className={
+                        m.status === 'pending'
+                          ? 'inline-block text-xs font-semibold rounded-full px-2 py-0.5 bg-orange-100 text-orange-700'
+                          : 'inline-block text-xs font-semibold rounded-full px-2 py-0.5 bg-green-100 text-green-700'
+                      }
+                    >
+                      {m.status}
+                    </span>
+                    <span
+                      className={
+                        m.role === 'admin'
+                          ? 'inline-block text-xs font-semibold rounded-full px-2 py-0.5 bg-navy/10 text-navy'
+                          : 'inline-block text-xs font-semibold rounded-full px-2 py-0.5 bg-gray-100 text-gray-500'
+                      }
+                    >
+                      {m.role}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className='text-right shrink-0'>
-                <span
-                  className={
-                    m.status === 'pending'
-                      ? 'inline-block text-xs font-semibold rounded-full px-2 py-1 bg-orange-100 text-orange-700'
-                      : 'inline-block text-xs font-semibold rounded-full px-2 py-1 bg-green-100 text-green-700'
-                  }
-                >
-                  {m.status}
-                </span>
-                <p className='text-xs text-gray-400 mt-1'>{m.role}</p>
-                <div className='mt-2 flex flex-wrap justify-end gap-2'>
-                  {m.status === 'pending' && (
-                    <button
-                      type='button'
-                      onClick={() => handleApprove(m.id)}
-                      disabled={busyId === m.id}
-                      className='bg-brand hover:bg-brand-dark text-white text-sm font-semibold rounded-lg px-3 py-1 disabled:opacity-60'
-                    >
-                      {busyId === m.id ? 'Approving...' : 'Approve'}
-                    </button>
-                  )}
-                  {canChangeRole(m) && (
-                    <button
-                      type='button'
-                      onClick={() => openRole(m)}
-                      className='border border-gray-300 text-navy text-sm font-semibold rounded-lg px-3 py-1'
-                    >
-                      {m.role === 'admin' ? 'Remove admin' : 'Make admin'}
-                    </button>
-                  )}
+
+              <div className='mt-4 space-y-1.5 text-sm text-gray-500'>
+                <p className='flex items-start gap-2'>
+                  <span className='mt-0.5'>
+                    <MailIcon />
+                  </span>
+                  <span className='break-all'>{m.email}</span>
+                </p>
+                {m.phone && (
+                  <p className='flex items-center gap-2'>
+                    <PhoneIcon />
+                    <span>{m.phone}</span>
+                  </p>
+                )}
+                {m.dateOfBirth && (
+                  <p className='flex items-center gap-2'>
+                    <CalendarIcon />
+                    <span>DOB: {m.dateOfBirth}</span>
+                  </p>
+                )}
+              </div>
+
+              <div className='mt-4 border-t border-gray-100 pt-4 flex flex-wrap gap-2'>
+                {m.status === 'pending' && (
                   <button
                     type='button'
-                    onClick={() => openEdit(m)}
-                    className='border border-gray-300 text-navy text-sm font-semibold rounded-lg px-3 py-1'
+                    onClick={() => handleApprove(m.id)}
+                    disabled={busyId === m.id}
+                    className='flex-1 min-w-24 bg-brand hover:bg-brand-dark text-white text-sm font-semibold rounded-lg px-3 py-2 disabled:opacity-60'
                   >
-                    Edit
+                    {busyId === m.id ? 'Approving...' : 'Approve'}
                   </button>
-                  {canDelete(m) && (
-                    <button
-                      type='button'
-                      onClick={() => openDelete(m)}
-                      className='border border-red-300 text-red-600 text-sm font-semibold rounded-lg px-3 py-1'
-                    >
-                      Delete
-                    </button>
-                  )}
-                </div>
+                )}
+                {canChangeRole(m) && (
+                  <button
+                    type='button'
+                    onClick={() => openRole(m)}
+                    className='flex-1 min-w-24 border border-gray-300 text-navy text-sm font-semibold rounded-lg px-3 py-2'
+                  >
+                    {m.role === 'admin' ? 'Remove admin' : 'Make admin'}
+                  </button>
+                )}
+                <button
+                  type='button'
+                  onClick={() => openEdit(m)}
+                  className='flex-1 min-w-24 border border-gray-300 text-navy text-sm font-semibold rounded-lg px-3 py-2'
+                >
+                  Edit
+                </button>
+                {canDelete(m) && (
+                  <button
+                    type='button'
+                    onClick={() => openDelete(m)}
+                    className='flex-1 min-w-24 border border-red-300 text-red-600 text-sm font-semibold rounded-lg px-3 py-2'
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
             </div>
           ))}
