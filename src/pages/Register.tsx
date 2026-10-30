@@ -1,170 +1,172 @@
-import { useState } from 'react'
-import type { ChangeEvent, FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { createUserWithEmailAndPassword } from 'firebase/auth'
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
-import { auth, db } from '../firebase'
-import { settings } from '../config/settings'
-import AuthBackground from '../components/AuthBackground'
+import { useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { WarningCircle } from "@phosphor-icons/react";
+import { auth, db } from "../firebase";
+import { settings } from "../config/settings";
+import AuthBackground from "../components/AuthBackground";
+import Brand from "../components/Brand";
+import {
+  Button,
+  SelectField,
+  TextAreaField,
+  TextField,
+} from "../components/ui";
+import CheckboxField from "../components/ui/CheckboxField";
 
 type RegisterForm = {
-  fullName: string
-  email: string
-  password: string
-  phone: string
-  gender: string
-  dateOfBirth: string
-  location: string
-  maritalStatus: string
-  occupation: string
-  bornAgain: string
-  holySpirit: string
-  howHeard: string
-  expectations: string
-  walkWithGod: string
-}
+  fullName: string;
+  email: string;
+  password: string;
+  phone: string;
+  gender: string;
+  dateOfBirth: string;
+  location: string;
+  maritalStatus: string;
+  occupation: string;
+  bornAgain: string;
+  holySpirit: string;
+  howHeard: string;
+  expectations: string;
+  walkWithGod: string;
+};
 
-type FormErrors = Partial<Record<keyof RegisterForm | 'terms', string>>
+type FormErrors = Partial<Record<keyof RegisterForm | "terms", string>>;
 
-const titles = ['Account', 'About you', 'Faith journey', 'Agreement']
-
-const baseField =
-  'w-full rounded-lg border px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand'
+const titles = ["Account", "About you", "Faith journey", "Agreement"];
 
 function Register() {
-  const [step, setStep] = useState(1)
-  const [termsAccepted, setTermsAccepted] = useState(false)
-  const [errors, setErrors] = useState<FormErrors>({})
-  const [submitting, setSubmitting] = useState(false)
-  const [submitError, setSubmitError] = useState('')
-  const navigate = useNavigate()
+  const [step, setStep] = useState(1);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const navigate = useNavigate();
   const [form, setForm] = useState<RegisterForm>({
-    fullName: '',
-    email: '',
-    password: '',
-    phone: '',
-    gender: '',
-    dateOfBirth: '',
-    location: '',
-    maritalStatus: '',
-    occupation: '',
-    bornAgain: '',
-    holySpirit: '',
-    howHeard: '',
-    expectations: '',
-    walkWithGod: '',
-  })
+    fullName: "",
+    email: "",
+    password: "",
+    phone: "",
+    gender: "",
+    dateOfBirth: "",
+    location: "",
+    maritalStatus: "",
+    occupation: "",
+    bornAgain: "",
+    holySpirit: "",
+    howHeard: "",
+    expectations: "",
+    walkWithGod: "",
+  });
 
-  const totalSteps = titles.length
-
-  function fieldClass(name: keyof RegisterForm) {
-    return errors[name] ? baseField + ' border-red-500' : baseField + ' border-gray-300'
-  }
+  const totalSteps = titles.length;
 
   function handleChange(
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
   ) {
-    setForm({ ...form, [e.target.name]: e.target.value })
+    setForm({ ...form, [e.target.name]: e.target.value });
   }
 
   function validateStep(stepNumber: number): FormErrors {
-    const found: FormErrors = {}
+    const found: FormErrors = {};
 
     if (stepNumber === 1) {
       if (form.fullName.trim().length < 2) {
-        found.fullName = 'Enter your full name'
+        found.fullName = "Enter your full name";
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-        found.email = 'Enter a valid email address'
+        found.email = "Enter a valid email address";
       }
       if (!/^\+?[0-9]{10,15}$/.test(form.phone.trim())) {
-        found.phone = 'Enter 10 to 15 digits, with an optional + at the start'
+        found.phone = "Enter 10 to 15 digits, with an optional + at the start";
       }
       if (form.password.length < 8) {
-        found.password = 'Password must be at least 8 characters'
+        found.password = "Password must be at least 8 characters";
       }
     }
 
     if (stepNumber === 2) {
-      if (form.gender === '') {
-        found.gender = 'Select your gender'
+      if (form.gender === "") {
+        found.gender = "Select your gender";
       }
-      if (form.dateOfBirth === '') {
-        found.dateOfBirth = 'Select your date of birth'
+      if (form.dateOfBirth === "") {
+        found.dateOfBirth = "Select your date of birth";
       } else {
-        const year = Number(form.dateOfBirth.slice(0, 4))
-        const today = new Date().toISOString().slice(0, 10)
+        const year = Number(form.dateOfBirth.slice(0, 4));
+        const today = new Date().toISOString().slice(0, 10);
         if (year < 1920 || form.dateOfBirth > today) {
-          found.dateOfBirth = 'Enter a real date of birth'
+          found.dateOfBirth = "Enter a real date of birth";
         }
       }
       if (form.location.trim().length < 2) {
-        found.location = 'Enter your city and country'
+        found.location = "Enter your city and country";
       }
-      if (form.maritalStatus === '') {
-        found.maritalStatus = 'Select your marital status'
+      if (form.maritalStatus === "") {
+        found.maritalStatus = "Select your marital status";
       }
     }
 
     if (stepNumber === 3) {
-      if (form.bornAgain === '') {
-        found.bornAgain = 'Select an answer'
+      if (form.bornAgain === "") {
+        found.bornAgain = "Select an answer";
       }
-      if (form.holySpirit === '') {
-        found.holySpirit = 'Select an answer'
+      if (form.holySpirit === "") {
+        found.holySpirit = "Select an answer";
       }
-      if (form.howHeard === '') {
-        found.howHeard = 'Select how you heard about us'
+      if (form.howHeard === "") {
+        found.howHeard = "Select how you heard about us";
       }
     }
 
     if (stepNumber === 4) {
       if (!termsAccepted) {
-        found.terms = 'You must agree to the terms to register'
+        found.terms = "You must agree to the terms to register";
       }
     }
 
-    return found
+    return found;
   }
 
   function goNext() {
-    const found = validateStep(step)
+    const found = validateStep(step);
 
     if (Object.keys(found).length > 0) {
-      setErrors(found)
-      return
+      setErrors(found);
+      return;
     }
 
-    setErrors({})
-    setStep(step + 1)
+    setErrors({});
+    setStep(step + 1);
   }
 
   function goBack() {
-    setErrors({})
-    setSubmitError('')
-    setStep(step - 1)
+    setErrors({});
+    setSubmitError("");
+    setStep(step - 1);
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault()
+    e.preventDefault();
 
     if (step < totalSteps) {
-      goNext()
-      return
+      goNext();
+      return;
     }
 
     for (let s = 1; s <= totalSteps; s++) {
-      const found = validateStep(s)
+      const found = validateStep(s);
       if (Object.keys(found).length > 0) {
-        setErrors(found)
-        setStep(s)
-        return
+        setErrors(found);
+        setStep(s);
+        return;
       }
     }
 
-    setErrors({})
-    setSubmitError('')
-    setSubmitting(true)
+    setErrors({});
+    setSubmitError("");
+    setSubmitting(true);
 
     const memberData = {
       communityId: settings.communityId,
@@ -181,327 +183,293 @@ function Register() {
       howHeard: form.howHeard,
       expectations: form.expectations.trim(),
       walkWithGod: form.walkWithGod.trim(),
-      status: 'pending',
+      status: "pending",
       termsAcceptedAt: new Date().toISOString(),
       createdAt: serverTimestamp(),
-    }
+    };
 
     try {
-      const cred = await createUserWithEmailAndPassword(auth, memberData.email, form.password)
-      await setDoc(doc(db, 'members', cred.user.uid), memberData)
-      navigate('/pending')
+      const cred = await createUserWithEmailAndPassword(
+        auth,
+        memberData.email,
+        form.password,
+      );
+      await setDoc(doc(db, "members", cred.user.uid), memberData);
+      navigate("/pending");
     } catch (err) {
-      const code = (err as { code?: string }).code
-      if (code === 'auth/email-already-in-use') {
-        setSubmitError('This email is already registered. Try logging in.')
-      } else if (code === 'auth/network-request-failed') {
-        setSubmitError('Network problem. Check your connection and try again.')
+      const code = (err as { code?: string }).code;
+      if (code === "auth/email-already-in-use") {
+        setSubmitError("This email is already registered. Try signing in.");
+      } else if (code === "auth/network-request-failed") {
+        setSubmitError("Network problem. Check your connection and try again.");
       } else {
-        setSubmitError('Something went wrong. Please try again.')
-        console.error(err)
+        setSubmitError("Something went wrong. Please try again.");
+        console.error(err);
       }
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
   }
 
   return (
     <AuthBackground>
-      <div className='w-full max-w-md'>
-        <div className='relative text-center mb-4'>
-          <div aria-hidden='true' className='auth-glow' />
-          <img
-            src='/logo.png'
-            alt={settings.name + ' logo'}
-            onError={(e) => {
-              e.currentTarget.style.display = 'none'
-            }}
-            className='relative mx-auto h-28 w-auto'
-          />
+      <div className="w-full max-w-md py-4">
+        <div className="mb-6">
+          <Brand />
         </div>
 
         <form
           onSubmit={handleSubmit}
           noValidate
-          className='bg-white rounded-xl shadow p-6'
+          className="rounded-panel border border-line bg-white p-5 sm:p-6"
         >
-          <h1 className='font-display text-3xl font-semibold text-navy'>Join {settings.name}</h1>
-
-          <p className='text-sm text-gray-500 mt-1 mb-1'>
-            Step {step} of {totalSteps}
+          <h1 className="font-display text-3xl font-semibold text-ink">
+            Join {settings.name}
+          </h1>
+          <p className="mt-2 text-[15px] text-muted">
+            A leader approves every account before you can enter.
           </p>
 
-          <p className='text-sm font-semibold text-brand mb-6'>{titles[step - 1]}</p>
+          <div className="mt-6 mb-6">
+            <p className="mb-2 text-[15px] font-semibold text-ink">
+              Step {step} of {totalSteps}: {titles[step - 1]}
+            </p>
+            <div aria-hidden="true" className="flex gap-1.5">
+              {titles.map((title, index) => (
+                <span
+                  key={title}
+                  className={
+                    "h-1.5 flex-1 rounded-full " +
+                    (index < step ? "bg-brand" : "bg-line")
+                  }
+                />
+              ))}
+            </div>
+          </div>
 
           {step === 1 && (
-            <div>
-              <div className='mb-4'>
-                <label className='block text-sm font-medium text-navy mb-1'>Full name</label>
-                <input
-                  name='fullName'
-                  value={form.fullName}
-                  onChange={handleChange}
-                  className={fieldClass('fullName')}
-                />
-                {errors.fullName && <p className='text-sm text-red-600 mt-1'>{errors.fullName}</p>}
-              </div>
-
-              <div className='mb-4'>
-                <label className='block text-sm font-medium text-navy mb-1'>Email</label>
-                <input
-                  name='email'
-                  type='email'
-                  value={form.email}
-                  onChange={handleChange}
-                  className={fieldClass('email')}
-                />
-                {errors.email && <p className='text-sm text-red-600 mt-1'>{errors.email}</p>}
-              </div>
-
-              <div className='mb-4'>
-                <label className='block text-sm font-medium text-navy mb-1'>WhatsApp number</label>
-                <input
-                  name='phone'
-                  type='tel'
-                  value={form.phone}
-                  onChange={handleChange}
-                  className={fieldClass('phone')}
-                />
-                {errors.phone && <p className='text-sm text-red-600 mt-1'>{errors.phone}</p>}
-              </div>
-
-              <div className='mb-6'>
-                <label className='block text-sm font-medium text-navy mb-1'>Password</label>
-                <input
-                  name='password'
-                  type='password'
-                  value={form.password}
-                  onChange={handleChange}
-                  className={fieldClass('password')}
-                />
-                {errors.password && <p className='text-sm text-red-600 mt-1'>{errors.password}</p>}
-              </div>
+            <div className="mb-6 space-y-4">
+              <TextField
+                label="Full name"
+                name="fullName"
+                value={form.fullName}
+                onChange={handleChange}
+                error={errors.fullName}
+                autoComplete="name"
+              />
+              <TextField
+                label="Email"
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={handleChange}
+                error={errors.email}
+                autoComplete="email"
+              />
+              <TextField
+                label="WhatsApp number"
+                name="phone"
+                type="tel"
+                value={form.phone}
+                onChange={handleChange}
+                error={errors.phone}
+                autoComplete="tel"
+              />
+              <TextField
+                label="Password"
+                name="password"
+                type="password"
+                value={form.password}
+                onChange={handleChange}
+                error={errors.password}
+                autoComplete="new-password"
+              />
             </div>
           )}
 
           {step === 2 && (
-            <div>
-              <div className='mb-4'>
-                <label className='block text-sm font-medium text-navy mb-1'>Gender</label>
-                <select
-                  name='gender'
-                  value={form.gender}
-                  onChange={handleChange}
-                  className={fieldClass('gender')}
-                >
-                  <option value=''>Select gender</option>
-                  <option value='male'>Male</option>
-                  <option value='female'>Female</option>
-                </select>
-                {errors.gender && <p className='text-sm text-red-600 mt-1'>{errors.gender}</p>}
-              </div>
-
-              <div className='mb-4'>
-                <label className='block text-sm font-medium text-navy mb-1'>Date of birth</label>
-                <input
-                  name='dateOfBirth'
-                  type='date'
-                  value={form.dateOfBirth}
-                  onChange={handleChange}
-                  className={fieldClass('dateOfBirth')}
-                />
-                {errors.dateOfBirth && <p className='text-sm text-red-600 mt-1'>{errors.dateOfBirth}</p>}
-              </div>
-
-              <div className='mb-4'>
-                <label className='block text-sm font-medium text-navy mb-1'>Location (city and country)</label>
-                <input
-                  name='location'
-                  value={form.location}
-                  onChange={handleChange}
-                  placeholder='e.g. Lagos, Nigeria'
-                  className={fieldClass('location')}
-                />
-                {errors.location && <p className='text-sm text-red-600 mt-1'>{errors.location}</p>}
-              </div>
-
-              <div className='mb-4'>
-                <label className='block text-sm font-medium text-navy mb-1'>Marital status</label>
-                <select
-                  name='maritalStatus'
-                  value={form.maritalStatus}
-                  onChange={handleChange}
-                  className={fieldClass('maritalStatus')}
-                >
-                  <option value=''>Select one</option>
-                  <option value='single'>Single</option>
-                  <option value='married'>Married</option>
-                </select>
-                {errors.maritalStatus && <p className='text-sm text-red-600 mt-1'>{errors.maritalStatus}</p>}
-              </div>
-
-              <div className='mb-6'>
-                <label className='block text-sm font-medium text-navy mb-1'>Occupation (optional)</label>
-                <input
-                  name='occupation'
-                  value={form.occupation}
-                  onChange={handleChange}
-                  className={fieldClass('occupation')}
-                />
-              </div>
+            <div className="mb-6 space-y-4">
+              <SelectField
+                label="Gender"
+                name="gender"
+                value={form.gender}
+                onChange={handleChange}
+                error={errors.gender}
+              >
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </SelectField>
+              <TextField
+                label="Date of birth"
+                name="dateOfBirth"
+                type="date"
+                value={form.dateOfBirth}
+                onChange={handleChange}
+                error={errors.dateOfBirth}
+                autoComplete="bday"
+              />
+              <TextField
+                label="Location (city and country)"
+                name="location"
+                value={form.location}
+                onChange={handleChange}
+                placeholder="e.g. Lagos, Nigeria"
+                error={errors.location}
+              />
+              <SelectField
+                label="Marital status"
+                name="maritalStatus"
+                value={form.maritalStatus}
+                onChange={handleChange}
+                error={errors.maritalStatus}
+              >
+                <option value="">Select one</option>
+                <option value="single">Single</option>
+                <option value="married">Married</option>
+              </SelectField>
+              <TextField
+                label="Occupation (optional)"
+                name="occupation"
+                value={form.occupation}
+                onChange={handleChange}
+              />
             </div>
           )}
 
           {step === 3 && (
-            <div>
-              <div className='mb-4'>
-                <label className='block text-sm font-medium text-navy mb-1'>Are you born again?</label>
-                <select
-                  name='bornAgain'
-                  value={form.bornAgain}
-                  onChange={handleChange}
-                  className={fieldClass('bornAgain')}
-                >
-                  <option value=''>Select one</option>
-                  <option value='yes'>Yes</option>
-                  <option value='no'>No</option>
-                </select>
-                {errors.bornAgain && <p className='text-sm text-red-600 mt-1'>{errors.bornAgain}</p>}
-              </div>
-
-              <div className='mb-4'>
-                <label className='block text-sm font-medium text-navy mb-1'>Have you received the Holy Spirit?</label>
-                <select
-                  name='holySpirit'
-                  value={form.holySpirit}
-                  onChange={handleChange}
-                  className={fieldClass('holySpirit')}
-                >
-                  <option value=''>Select one</option>
-                  <option value='yes'>Yes</option>
-                  <option value='no'>No</option>
-                  <option value='not-sure'>Not sure</option>
-                </select>
-                {errors.holySpirit && <p className='text-sm text-red-600 mt-1'>{errors.holySpirit}</p>}
-              </div>
-
-              <div className='mb-4'>
-                <label className='block text-sm font-medium text-navy mb-1'>How did you hear about us?</label>
-                <select
-                  name='howHeard'
-                  value={form.howHeard}
-                  onChange={handleChange}
-                  className={fieldClass('howHeard')}
-                >
-                  <option value=''>Select one</option>
-                  <option value='friend-or-family'>Friend or family</option>
-                  <option value='whatsapp'>WhatsApp</option>
-                  <option value='social-media'>Social media</option>
-                  <option value='event'>Event or gathering</option>
-                  <option value='other'>Other</option>
-                </select>
-                {errors.howHeard && <p className='text-sm text-red-600 mt-1'>{errors.howHeard}</p>}
-              </div>
-
-              <div className='mb-4'>
-                <label className='block text-sm font-medium text-navy mb-1'>What are your expectations from {settings.name}?</label>
-                <textarea
-                  name='expectations'
-                  value={form.expectations}
-                  onChange={handleChange}
-                  rows={3}
-                  className={fieldClass('expectations')}
-                />
-              </div>
-
-              <div className='mb-6'>
-                <label className='block text-sm font-medium text-navy mb-1'>Tell us about your walk with God</label>
-                <textarea
-                  name='walkWithGod'
-                  value={form.walkWithGod}
-                  onChange={handleChange}
-                  rows={3}
-                  className={fieldClass('walkWithGod')}
-                />
-              </div>
+            <div className="mb-6 space-y-4">
+              <SelectField
+                label="Are you born again?"
+                name="bornAgain"
+                value={form.bornAgain}
+                onChange={handleChange}
+                error={errors.bornAgain}
+              >
+                <option value="">Select one</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </SelectField>
+              <SelectField
+                label="Have you received the Holy Spirit?"
+                name="holySpirit"
+                value={form.holySpirit}
+                onChange={handleChange}
+                error={errors.holySpirit}
+              >
+                <option value="">Select one</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+                <option value="not-sure">Not sure</option>
+              </SelectField>
+              <SelectField
+                label="How did you hear about us?"
+                name="howHeard"
+                value={form.howHeard}
+                onChange={handleChange}
+                error={errors.howHeard}
+              >
+                <option value="">Select one</option>
+                <option value="friend-or-family">Friend or family</option>
+                <option value="whatsapp">WhatsApp</option>
+                <option value="social-media">Social media</option>
+                <option value="event">Event or gathering</option>
+                <option value="other">Other</option>
+              </SelectField>
+              <TextAreaField
+                label={"What are your expectations from " + settings.name + "?"}
+                name="expectations"
+                value={form.expectations}
+                onChange={handleChange}
+                rows={3}
+              />
+              <TextAreaField
+                label="Tell us about your walk with God"
+                name="walkWithGod"
+                value={form.walkWithGod}
+                onChange={handleChange}
+                rows={3}
+              />
             </div>
           )}
 
           {step === 4 && (
-            <div>
-              <div className='bg-paper border border-gray-200 rounded-lg p-3 text-sm text-gray-600 mb-4'>
-                <p className='mb-2'>
-                  By joining {settings.name}, you agree that the information you give here is true and
-                  that it will be used only to run this community.
-                </p>
-                <p className='mb-2'>
-                  Your details are private. The community leaders can see them, and you can see your
-                  own, but other members cannot.
+            <div className="mb-6">
+              <div className="mb-4 space-y-2 rounded-control border border-line bg-cream p-4 text-[15px] text-ink">
+                <p>
+                  By joining {settings.name}, you agree that the information you
+                  give here is true and that it will be used only to run this
+                  community.
                 </p>
                 <p>
-                  Your membership starts after the Admin approves your registration.
+                  Your details are private. The community leaders can see them,
+                  and you can see your own, but other members cannot.
+                </p>
+                <p>
+                  Your membership starts after the Admin approves your
+                  registration.
                 </p>
               </div>
 
-              <div className='mb-6'>
-                <label className='flex items-start gap-2 text-sm text-navy'>
-                  <input
-                    type='checkbox'
-                    checked={termsAccepted}
-                    onChange={(e) => {
-                      setTermsAccepted(e.target.checked)
-                      setErrors({})
-                    }}
-                    className='mt-1'
-                  />
-                  <span>I agree to the terms and conditions</span>
-                </label>
-                {errors.terms && <p className='text-sm text-red-600 mt-1'>{errors.terms}</p>}
-              </div>
+              <CheckboxField
+                label="I agree to the terms and conditions"
+                checked={termsAccepted}
+                onChange={(e) => {
+                  setTermsAccepted(e.target.checked);
+                  setErrors({});
+                }}
+                error={errors.terms}
+              />
             </div>
           )}
 
-          {submitError && <p className='text-sm text-red-600 mb-3'>{submitError}</p>}
+          {submitError && (
+            <p
+              role="alert"
+              className="mb-4 flex items-start gap-2 rounded-control bg-danger-bg px-3 py-2.5 text-[15px] font-semibold text-danger"
+            >
+              <WarningCircle
+                size={20}
+                aria-hidden="true"
+                className="shrink-0"
+              />
+              {submitError}
+            </p>
+          )}
 
-          <div className='flex gap-3'>
+          <div className="flex gap-3">
             {step > 1 && (
-              <button
-                type='button'
-                onClick={goBack}
-                className='w-1/3 border border-gray-300 text-navy font-semibold rounded-lg py-2'
-              >
+              <Button variant="outline" onClick={goBack}>
                 Back
-              </button>
+              </Button>
             )}
 
             {step < totalSteps && (
-              <button
-                type='button'
-                onClick={goNext}
-                className='flex-1 bg-brand hover:bg-brand-dark text-white font-semibold rounded-lg py-2'
-              >
+              <Button onClick={goNext} className="flex-1">
                 Next
-              </button>
+              </Button>
             )}
 
             {step === totalSteps && (
-              <button
-                type='submit'
-                disabled={submitting}
-                className='flex-1 bg-brand hover:bg-brand-dark text-white font-semibold rounded-lg py-2 disabled:opacity-60'
-              >
-                {submitting ? 'Registering...' : 'Register'}
-              </button>
+              <Button type="submit" disabled={submitting} className="flex-1">
+                {submitting ? "Creating account..." : "Create account"}
+              </Button>
             )}
           </div>
 
-          <p className='text-sm text-gray-500 mt-4 text-center'>
-            Already registered? <Link to='/login' className='text-brand'>Log in</Link>
+          <p className="mt-4 flex flex-wrap items-center justify-center gap-x-1.5 text-[15px] text-muted">
+            Already registered?
+            <Link
+              to="/login"
+              className="inline-flex min-h-11 items-center font-semibold text-brand hover:underline"
+            >
+              Sign in
+            </Link>
           </p>
         </form>
       </div>
     </AuthBackground>
-  )
+  );
 }
 
-export default Register
+export default Register;

@@ -1,87 +1,84 @@
-import { useEffect } from 'react'
-import { Navigate } from 'react-router-dom'
-import { signOut } from 'firebase/auth'
-import { auth } from '../firebase'
-import { settings } from '../config/settings'
-import { useAuth } from '../auth/useAuth'
-import { homeFor } from '../auth/authContext'
-import AuthBackground from '../components/AuthBackground'
+import { useEffect } from "react";
+import { Navigate } from "react-router-dom";
+import { signOut } from "firebase/auth";
+import { auth } from "../firebase";
+import { settings } from "../config/settings";
+import { useAuth } from "../auth/useAuth";
+import { homeFor } from "../auth/authContext";
+import AuthBackground from "../components/AuthBackground";
+import Brand from "../components/Brand";
+import { Button, Chip } from "../components/ui";
 
 function Pending() {
-  const { user, profile, loading, reload } = useAuth()
+  const { user, profile, loading, reload } = useAuth();
 
   useEffect(() => {
     if (user && !profile) {
-      reload()
+      reload();
     }
-  }, [user, profile, reload])
+  }, [user, profile, reload]);
 
   if (loading) {
     return (
-      <div className='min-h-screen bg-paper flex items-center justify-center text-gray-500'>
+      <div className="flex min-h-screen items-center justify-center bg-cream text-muted">
         Loading...
       </div>
-    )
+    );
   }
 
   if (!user) {
-    return <Navigate to='/login' replace />
+    return <Navigate to="/login" replace />;
   }
 
-  if (profile && profile.status === 'approved') {
-    return <Navigate to={homeFor(profile)} replace />
+  if (profile && profile.status === "approved") {
+    return <Navigate to={homeFor(profile)} replace />;
   }
 
-  const firstName = profile?.fullName.split(' ')[0] ?? ''
+  const firstName = profile?.fullName.split(" ")[0] ?? "";
 
   return (
     <AuthBackground>
-      <div className='w-full max-w-md'>
-        <div className='relative text-center mb-4'>
-          <div aria-hidden='true' className='auth-glow' />
-          <img
-            src='/logo.png'
-            alt={settings.name + ' logo'}
-            onError={(e) => {
-              e.currentTarget.style.display = 'none'
-            }}
-            className='relative mx-auto h-36 w-auto'
-          />
+      <div className="w-full max-w-md">
+        <div className="mb-6">
+          <Brand />
         </div>
 
-        <div className='bg-white rounded-xl shadow p-6 text-center'>
-          <h1 className='font-display text-3xl font-semibold text-navy'>
-            {firstName ? 'Thank you, ' + firstName : 'Thank you'}
+        <div className="rounded-panel border border-line bg-white p-5 sm:p-6">
+          <Chip tone="warning">Pending approval</Chip>
+
+          <h1 className="mt-4 font-display text-3xl font-semibold text-ink">
+            Waiting for approval
           </h1>
 
-          <p className='text-sm text-gray-600 mt-3 mb-2'>
-            Your registration for {settings.name} has been received.
+          <p className="mt-3 text-[15px] text-ink">
+            {firstName ? "Thank you, " + firstName + ". " : "Thank you. "}
+            Your registration for {settings.name} has been received. A leader
+            needs to approve it before you can see meetings and assignments. You
+            can sign in as soon as that is done.
           </p>
 
-          <p className='text-sm text-gray-600 mb-6'>
-            The Admin will review it and approve your membership. You can log in again later to check.
-          </p>
+          {user.email && (
+            <p className="mt-3 text-[13px] text-muted">
+              Registered as {user.email}
+            </p>
+          )}
 
-          <div className='flex gap-3'>
-            <button
-              type='button'
-              onClick={() => reload()}
-              className='flex-1 bg-brand hover:bg-brand-dark text-white font-semibold rounded-lg py-2'
-            >
-              Check status
-            </button>
-            <button
-              type='button'
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <Button onClick={() => reload()} className="sm:flex-1">
+              Check again
+            </Button>
+            <Button
+              variant="outline"
               onClick={() => signOut(auth)}
-              className='flex-1 border border-gray-300 text-navy font-semibold rounded-lg py-2'
+              className="sm:flex-1"
             >
               Log out
-            </button>
+            </Button>
           </div>
         </div>
       </div>
     </AuthBackground>
-  )
+  );
 }
 
-export default Pending
+export default Pending;

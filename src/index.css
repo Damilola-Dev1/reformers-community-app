@@ -1,15 +1,102 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
-@import '@fontsource-variable/plus-jakarta-sans';
-@import '@fontsource-variable/fraunces';
+@import "@fontsource-variable/plus-jakarta-sans";
+@import "@fontsource-variable/fraunces";
 
-@theme {
-  --font-sans: 'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif;
-  --font-display: 'Fraunces Variable', ui-serif, Georgia, serif;
-
-  --color-navy: #0b1b3a;
-  --color-navy-soft: #14294f;
-  --color-brand: #f97316;
-  --color-brand-dark: #ea580c;
-  --color-paper: #f4f6fa;
+/*
+  Fallback palette for the first paint. The real values live in
+  src/config/settings.ts (settings.theme) and are written onto :root
+  when the app starts. Keep the two in step.
+*/
+:root {
+  --brand: #7a1e2e;
+  --brand-dark: #5e1522;
+  --brand-tint: #f4e8ea;
+  --cream: #faf7f2;
+  --line: #e8e0d6;
+  --ink: #1f1a1a;
+  --muted: #5f5757;
+  --teal: #1f5a5e;
+  --gold: #b8893b;
+  --ok: #14612f;
+  --ok-bg: #e7f4ea;
+  --warn: #8a4308;
+  --warn-bg: #fbf0e0;
+  --danger: #b91c1c;
+  --danger-bg: #fbeaea;
 }
+
+/* "inline" makes bg-brand compile to var(--brand), so the settings file wins. */
+@theme inline {
+  --font-sans:
+    "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces Variable", ui-serif, Georgia, serif;
+
+  --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-tint: var(--brand-tint);
+  --color-cream: var(--cream);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-teal: var(--teal);
+  --color-gold: var(--gold);
+  --color-ok: var(--ok);
+  --color-ok-bg: var(--ok-bg);
+  --color-warn: var(--warn);
+  --color-warn-bg: var(--warn-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+
+  --radius-panel: 12px;
+  --radius-control: 10px;
+
+  /*
+    LEGACY ALIASES: remove in the final step, once no file uses them.
+    They keep unrestyled screens working and on-brand while we go screen by screen.
+  */
+  --color-paper: var(--cream);
+  --color-navy: var(--ink);
+  --color-navy-soft: var(--ink);
+}
+
+@layer base {
+  body {
+    @apply bg-cream text-ink antialiased;
+  }
+
+  /* Keyboard focus: 2px maroon ring with offset, on every control. */
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+}
+
+/* Browser autofill must not turn inputs blue or yellow. */
+input:-webkit-autofill,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: var(--ink);
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+  box-shadow: 0 0 0 1000px #ffffff inset;
+  caret-color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------------------------------------------------------------
+   KEEP YOUR EXISTING CUSTOM RULES BELOW THIS LINE
+   (.drawer-in, .backdrop-in, .fade-in, .auth-blob and any others).
+   The pasted index.css did not show them, but the code uses them.
+   They go away in Steps 2 and 4.
+   --------------------------------------------------------------- */

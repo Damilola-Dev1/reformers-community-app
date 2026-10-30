@@ -1,18 +1,16 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from "react";
 
 type Props = {
-  children: ReactNode
-}
+  children: ReactNode;
+};
 
+// A plain cream page that centres its content. No blobs, glow or blur.
 function AuthBackground({ children }: Props) {
   return (
-    <div className='relative min-h-screen overflow-hidden bg-paper flex items-center justify-center p-4'>
-      <div aria-hidden='true' className='auth-blob auth-blob-1' />
-      <div aria-hidden='true' className='auth-blob auth-blob-2' />
-      <div aria-hidden='true' className='auth-blob auth-blob-3' />
-      <div className='relative z-10 w-full flex justify-center'>{children}</div>
+    <div className="flex min-h-screen items-center justify-center bg-cream p-4">
+      {children}
     </div>
-  )
+  );
 }
 
-export default AuthBackground
+export default AuthBackground;
