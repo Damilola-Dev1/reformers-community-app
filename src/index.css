@@ -50,14 +50,6 @@
 
   --radius-panel: 12px;
   --radius-control: 10px;
-
-  /*
-    LEGACY ALIASES: remove in the final step, once no file uses them.
-    They keep unrestyled screens working and on-brand while we go screen by screen.
-  */
-  --color-paper: var(--cream);
-  --color-navy: var(--ink);
-  --color-navy-soft: var(--ink);
 }
 
 @layer base {
@@ -93,10 +85,3 @@ select:-webkit-autofill {
     scroll-behavior: auto !important;
   }
 }
-
-/* ---------------------------------------------------------------
-   KEEP YOUR EXISTING CUSTOM RULES BELOW THIS LINE
-   (.drawer-in, .backdrop-in, .fade-in, .auth-blob and any others).
-   The pasted index.css did not show them, but the code uses them.
-   They go away in Steps 2 and 4.
-   --------------------------------------------------------------- */

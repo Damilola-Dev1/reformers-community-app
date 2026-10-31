@@ -32,7 +32,7 @@ export function Th({
     <th
       scope="col"
       className={
-        "border-b border-line bg-cream px-4 py-3 text-[13px] font-semibold tracking-wide text-muted uppercase " +
+        "border-b border-line bg-white px-3 py-3 text-[13px] font-medium text-muted " +
         className
       }
       {...rest}
@@ -46,7 +46,7 @@ export function Td({
 }: TdHTMLAttributes<HTMLTableCellElement>) {
   return (
     <td
-      className={"border-b border-line px-4 py-3 align-middle " + className}
+      className={"border-b border-line px-3 py-3 align-middle " + className}
       {...rest}
     />
   );

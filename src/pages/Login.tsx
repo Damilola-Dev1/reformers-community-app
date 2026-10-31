@@ -94,83 +94,96 @@ function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-white md:grid md:grid-cols-2">
-      <div className="flex px-4 py-10 sm:px-10">
-        <form
-          onSubmit={handleSubmit}
-          noValidate
-          className="m-auto w-full max-w-sm"
-        >
+    <div className="min-h-screen bg-cream md:grid md:grid-cols-2 md:bg-white">
+      <div className="flex px-4 py-8 sm:px-10 md:py-10">
+        <div className="m-auto w-full max-w-sm">
           <Brand />
 
-          <h1 className="mt-10 font-display text-3xl font-semibold text-ink">
-            Welcome back
-          </h1>
-          <p className="mt-2 mb-8 text-[15px] text-muted">
-            Sign in to see your next meeting and your assignments.
-          </p>
-
-          <div className="space-y-4">
-            <TextField
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-            />
-            <TextField
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-            />
+          <div className="mt-6 rounded-panel bg-brand p-5 text-white md:hidden">
+            <div aria-hidden="true" className="mb-4 h-1 w-12 bg-gold" />
+            <p className="font-display text-2xl font-semibold leading-tight">
+              Your meetings, assignments and attendance in one place.
+            </p>
           </div>
 
-          <div className="mt-1 mb-4 text-right">
-            <Button variant="quiet" onClick={handleReset} className="-mr-4">
-              Forgot password?
-            </Button>
-          </div>
+          <form
+            onSubmit={handleSubmit}
+            noValidate
+            className="mt-4 rounded-panel border border-line bg-white p-5 md:mt-10 md:border-0 md:p-0"
+          >
+            <h1 className="font-display text-3xl font-semibold text-ink">
+              Welcome back
+            </h1>
+            <p className="mt-2 mb-6 text-[15px] text-muted">
+              Sign in to see your next meeting and your assignments.
+            </p>
 
-          {error && (
-            <p
-              key={errorKey}
-              role="alert"
-              className="mb-4 flex items-start gap-2 rounded-control bg-danger-bg px-3 py-2.5 text-[15px] font-semibold text-danger"
-            >
-              <WarningCircle
-                size={20}
-                aria-hidden="true"
-                className="shrink-0"
+            <div className="space-y-4">
+              <TextField
+                label="Email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
               />
-              {error}
-            </p>
-          )}
-          {info && (
-            <p
-              role="status"
-              className="mb-4 flex items-start gap-2 rounded-control bg-ok-bg px-3 py-2.5 text-[15px] text-ok"
-            >
-              <CheckCircle size={20} aria-hidden="true" className="shrink-0" />
-              {info}
-            </p>
-          )}
+              <TextField
+                label="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+            </div>
 
-          <Button type="submit" fullWidth disabled={submitting}>
-            {submitting ? "Signing in..." : "Sign in"}
-          </Button>
+            <div className="mt-1 mb-4 text-right">
+              <Button variant="quiet" onClick={handleReset} className="-mr-4">
+                Forgot password?
+              </Button>
+            </div>
 
-          <p className="mt-4 flex flex-wrap items-center justify-center gap-x-1.5 text-[15px] text-muted">
-            New here?
-            <Link
-              to="/register"
-              className="inline-flex min-h-11 items-center font-semibold text-brand hover:underline"
-            >
-              Register
-            </Link>
-          </p>
-        </form>
+            {error && (
+              <p
+                key={errorKey}
+                role="alert"
+                className="mb-4 flex items-start gap-2 rounded-control bg-danger-bg px-3 py-2.5 text-[15px] font-semibold text-danger"
+              >
+                <WarningCircle
+                  size={20}
+                  aria-hidden="true"
+                  className="shrink-0"
+                />
+                {error}
+              </p>
+            )}
+            {info && (
+              <p
+                role="status"
+                className="mb-4 flex items-start gap-2 rounded-control bg-ok-bg px-3 py-2.5 text-[15px] text-ok"
+              >
+                <CheckCircle
+                  size={20}
+                  aria-hidden="true"
+                  className="shrink-0"
+                />
+                {info}
+              </p>
+            )}
+
+            <Button type="submit" fullWidth disabled={submitting}>
+              {submitting ? "Signing in..." : "Sign in"}
+            </Button>
+
+            <p className="mt-4 flex flex-wrap items-center justify-center gap-x-1.5 text-[15px] text-muted">
+              New here?
+              <Link
+                to="/register"
+                className="inline-flex min-h-11 items-center font-semibold text-brand hover:underline"
+              >
+                Register
+              </Link>
+            </p>
+          </form>
+        </div>
       </div>
 
       <div className="hidden items-center bg-brand p-16 text-white md:flex">

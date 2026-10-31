@@ -34,6 +34,7 @@ function Pending() {
     return <Navigate to={homeFor(profile)} replace />;
   }
 
+  const deactivated = profile?.status === "deactivated";
   const firstName = profile?.fullName.split(" ")[0] ?? "";
 
   return (
@@ -44,18 +45,33 @@ function Pending() {
         </div>
 
         <div className="rounded-panel border border-line bg-white p-5 sm:p-6">
-          <Chip tone="warning">Pending approval</Chip>
+          {deactivated ? (
+            <span className="inline-flex rounded-full bg-danger-bg px-3 py-1 text-[13px] font-semibold text-danger">
+              Account deactivated
+            </span>
+          ) : (
+            <Chip tone="warning">Pending approval</Chip>
+          )}
 
           <h1 className="mt-4 font-display text-3xl font-semibold text-ink">
-            Waiting for approval
+            {deactivated ? "Account deactivated" : "Waiting for approval"}
           </h1>
 
-          <p className="mt-3 text-[15px] text-ink">
-            {firstName ? "Thank you, " + firstName + ". " : "Thank you. "}
-            Your registration for {settings.name} has been received. A leader
-            needs to approve it before you can see meetings and assignments. You
-            can sign in as soon as that is done.
-          </p>
+          {deactivated ? (
+            <p className="mt-3 text-[15px] text-ink">
+              {firstName ? firstName + ", your " : "Your "}
+              account for {settings.name} is no longer active, so you cannot see
+              meetings or assignments. If you think this is a mistake, please
+              speak to a leader.
+            </p>
+          ) : (
+            <p className="mt-3 text-[15px] text-ink">
+              {firstName ? "Thank you, " + firstName + ". " : "Thank you. "}
+              Your registration for {settings.name} has been received. A leader
+              needs to approve it before you can see meetings and assignments.
+              You can sign in as soon as that is done.
+            </p>
+          )}
 
           {user.email && (
             <p className="mt-3 text-[13px] text-muted">

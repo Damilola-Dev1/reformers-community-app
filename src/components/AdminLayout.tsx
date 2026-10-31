@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { SyntheticEvent } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { signOut } from "firebase/auth";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import {
   Cake,
   CalendarCheck,
@@ -15,7 +16,7 @@ import {
   X,
 } from "@phosphor-icons/react";
 import type { Icon } from "@phosphor-icons/react";
-import { auth } from "../firebase";
+import { auth, db } from "../firebase";
 import { settings } from "../config/settings";
 
 type LinkItem = {
@@ -78,8 +79,75 @@ function Brand() {
   );
 }
 
+type NavItemProps = {
+  item: LinkItem;
+  pending: number;
+  onClick?: () => void;
+};
+
+// One sidebar link. Members shows how many people are waiting for approval.
+function NavItem({ item, pending, onClick }: NavItemProps) {
+  const showBadge = item.to === "/admin/members" && pending > 0;
+  return (
+    <NavLink
+      to={item.to}
+      end={item.end}
+      onClick={onClick}
+      aria-label={
+        showBadge
+          ? item.label + ", " + pending + " waiting for approval"
+          : undefined
+      }
+      className={({ isActive }) => linkClass(isActive)}
+    >
+      {({ isActive }) => (
+        <>
+          <item.icon size={20} aria-hidden="true" className="shrink-0" />
+          {item.label}
+          {showBadge && (
+            <span
+              aria-hidden="true"
+              className={
+                "ml-auto min-w-6 rounded-full px-2 py-0.5 text-center text-[13px] font-semibold " +
+                (isActive ? "bg-white text-brand" : "bg-brand text-white")
+              }
+            >
+              {pending > 99 ? "99+" : pending}
+            </span>
+          )}
+        </>
+      )}
+    </NavLink>
+  );
+}
+
 function AdminLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [pending, setPending] = useState(0);
+  const { pathname } = useLocation();
+
+  // Count people waiting for approval. Runs again on every page change,
+  // so the number drops as soon as someone is approved.
+  useEffect(() => {
+    let cancelled = false;
+    async function loadPending() {
+      try {
+        const q = query(
+          collection(db, "members"),
+          where("communityId", "==", settings.communityId),
+          where("status", "==", "pending"),
+        );
+        const snap = await getDocs(q);
+        if (!cancelled) setPending(snap.size);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    loadPending();
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
 
   return (
     <div className="min-h-screen bg-cream md:flex">
@@ -90,15 +158,7 @@ function AdminLayout() {
 
         <nav aria-label="Admin" className="flex flex-col gap-1">
           {links.map((l) => (
-            <NavLink
-              key={l.to}
-              to={l.to}
-              end={l.end}
-              className={({ isActive }) => linkClass(isActive)}
-            >
-              <l.icon size={20} aria-hidden="true" className="shrink-0" />
-              {l.label}
-            </NavLink>
+            <NavItem key={l.to} item={l} pending={pending} />
           ))}
         </nav>
 
@@ -117,10 +177,22 @@ function AdminLayout() {
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
-            aria-label="Open menu"
-            className="flex size-11 shrink-0 items-center justify-center rounded-control border border-line text-ink transition-colors duration-150 hover:bg-brand-tint"
+            aria-label={
+              pending > 0
+                ? "Open menu, " + pending + " waiting for approval"
+                : "Open menu"
+            }
+            className="relative flex size-11 shrink-0 items-center justify-center rounded-control border border-line text-ink transition-colors duration-150 hover:bg-brand-tint"
           >
             <List size={22} aria-hidden="true" />
+            {pending > 0 && (
+              <span
+                aria-hidden="true"
+                className="absolute -right-1.5 -top-1.5 min-w-5 rounded-full bg-brand px-1.5 text-center text-[13px] font-semibold leading-5 text-white"
+              >
+                {pending > 9 ? "9+" : pending}
+              </span>
+            )}
           </button>
           <p className="min-w-0 truncate font-display text-base font-semibold text-ink">
             {settings.name}
@@ -158,16 +230,12 @@ function AdminLayout() {
               className="flex flex-1 flex-col gap-1 overflow-y-auto p-3"
             >
               {links.map((l) => (
-                <NavLink
+                <NavItem
                   key={l.to}
-                  to={l.to}
-                  end={l.end}
+                  item={l}
+                  pending={pending}
                   onClick={() => setMenuOpen(false)}
-                  className={({ isActive }) => linkClass(isActive)}
-                >
-                  <l.icon size={20} aria-hidden="true" className="shrink-0" />
-                  {l.label}
-                </NavLink>
+                />
               ))}
             </nav>
 

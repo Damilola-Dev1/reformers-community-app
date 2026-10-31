@@ -412,7 +412,7 @@ function Register() {
               </div>
 
               <CheckboxField
-                label="I agree to the terms and conditions"
+                label="I agree that my name, phone number and birthday are stored for community records."
                 checked={termsAccepted}
                 onChange={(e) => {
                   setTermsAccepted(e.target.checked);
