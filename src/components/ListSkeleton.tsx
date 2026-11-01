@@ -1,18 +1,26 @@
 type Props = {
   rows?: number;
+  // Use inside a card that already has a border.
+  bare?: boolean;
 };
 
-function ListSkeleton({ rows = 4 }: Props) {
+function ListSkeleton({ rows = 4, bare = false }: Props) {
   return (
     <div
       role="status"
       aria-busy="true"
-      className="divide-y divide-line overflow-hidden rounded-panel border border-line bg-white"
+      className={
+        bare
+          ? "divide-y divide-line"
+          : "divide-y divide-line overflow-hidden rounded-panel border border-line bg-white"
+      }
     >
       {Array.from({ length: rows }, (_, i) => (
         <div
           key={i}
-          className="flex animate-pulse items-center gap-3 px-4 py-4"
+          className={
+            "flex animate-pulse items-center gap-3 py-4 " + (bare ? "" : "px-4")
+          }
         >
           <div className="size-10 shrink-0 rounded-full bg-line" />
           <div className="flex-1 space-y-2">

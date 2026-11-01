@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { settings } from "../config/settings";
+import ListSkeleton from "../components/ListSkeleton";
 
 type Announcement = {
   id: string;
@@ -232,7 +233,7 @@ function AdminAnnouncements() {
               Posted
             </h2>
 
-            {loading && <p className="text-[15px] text-muted">Loading...</p>}
+            {loading && <ListSkeleton rows={3} />}
             {error && (
               <p role="alert" className="text-[15px] font-semibold text-danger">
                 {error}

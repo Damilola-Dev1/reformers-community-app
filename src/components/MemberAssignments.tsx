@@ -4,6 +4,7 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { settings } from "../config/settings";
 import { formatDeadline, phaseOf } from "../utils/deadline";
+import ListSkeleton from "./ListSkeleton";
 
 type Assignment = {
   id: string;
@@ -113,7 +114,11 @@ function MemberAssignments({ limit }: Props) {
         </h2>
       )}
 
-      {loading && <p className={"text-[15px] text-muted" + gap}>Loading...</p>}
+      {loading && (
+        <div className={compact ? "mt-3 border-t border-line" : ""}>
+          <ListSkeleton rows={compact ? 2 : 4} bare />
+        </div>
+      )}
       {error && (
         <p
           role="alert"

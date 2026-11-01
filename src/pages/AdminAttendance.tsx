@@ -18,6 +18,7 @@ import { db } from "../firebase";
 import { settings } from "../config/settings";
 import { APP_URL, openWhatsAppShare } from "../config/whatsapp";
 import AttendanceChart from "../components/AttendanceChart";
+import ListSkeleton from "../components/ListSkeleton";
 
 type Service = {
   id: string;
@@ -515,7 +516,7 @@ function ServiceDetail({ service, onBack, onFinalizedChange }: DetailProps) {
           />
         </div>
 
-        {loading && <p className="text-[15px] text-muted">Loading...</p>}
+        {loading && <ListSkeleton rows={5} />}
         {error && (
           <p role="alert" className="text-[15px] font-semibold text-danger">
             {error}
@@ -850,7 +851,7 @@ function AdminAttendance() {
               Services
             </h2>
 
-            {loading && <p className="text-[15px] text-muted">Loading...</p>}
+            {loading && <ListSkeleton rows={5} />}
             {error && (
               <p role="alert" className="text-[15px] font-semibold text-danger">
                 {error}

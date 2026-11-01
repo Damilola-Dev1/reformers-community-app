@@ -4,6 +4,7 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { settings } from "../config/settings";
 import { useAuth } from "../auth/useAuth";
+import ListSkeleton from "./ListSkeleton";
 
 type Row = {
   id: string;
@@ -117,7 +118,11 @@ function MyAttendance({ full = false }: Props) {
         </h2>
       )}
 
-      {loading && <p className={"text-[15px] text-muted" + gap}>Loading...</p>}
+      {loading && (
+        <div className={full ? "" : "mt-3 border-t border-line"}>
+          <ListSkeleton rows={full ? 4 : 2} bare />
+        </div>
+      )}
       {error && (
         <p
           role="alert"

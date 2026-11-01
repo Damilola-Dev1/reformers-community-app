@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { settings } from "../config/settings";
+import ListSkeleton from "../components/ListSkeleton";
 
 type Person = {
   id: string;
@@ -235,7 +236,7 @@ function AdminBirthdays() {
         </h1>
         <p className="mb-6 mt-1 text-[15px] text-muted">{subline}</p>
 
-        {loading && <p className="text-[15px] text-muted">Loading...</p>}
+        {loading && <ListSkeleton rows={5} />}
         {error && (
           <p role="alert" className="text-[15px] font-semibold text-danger">
             {error}

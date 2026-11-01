@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { settings } from "../config/settings";
+import ListSkeleton from "./ListSkeleton";
 
 type Announcement = {
   id: string;
@@ -79,7 +80,11 @@ function MemberAnnouncements() {
         Announcements
       </h2>
 
-      {loading && <p className="mt-3 text-[15px] text-muted">Loading...</p>}
+      {loading && (
+        <div className="mt-3 border-t border-line">
+          <ListSkeleton rows={2} bare />
+        </div>
+      )}
       {error && (
         <p role="alert" className="mt-3 text-[15px] font-semibold text-danger">
           {error}

@@ -16,7 +16,6 @@ import { db } from "../firebase";
 import { settings } from "../config/settings";
 import { useAuth } from "../auth/useAuth";
 import type { Member } from "../types";
-
 import { Table, Td, Th, Tr } from "../components/ui/Table";
 import ListSkeleton from "../components/ListSkeleton";
 

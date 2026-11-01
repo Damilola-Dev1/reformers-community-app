@@ -17,6 +17,7 @@ import { settings } from "../config/settings";
 import { APP_URL, openWhatsAppShare } from "../config/whatsapp";
 import { closesAtOf, deadlineOf, formatDeadline } from "../utils/deadline";
 import ExtendTime from "../components/ExtendTime";
+import ListSkeleton from "../components/ListSkeleton";
 
 type Assignment = {
   id: string;
@@ -406,7 +407,7 @@ function AdminAssignments() {
               Posted
             </h2>
 
-            {loading && <p className="text-[15px] text-muted">Loading...</p>}
+            {loading && <ListSkeleton rows={3} />}
             {error && (
               <p role="alert" className="text-[15px] font-semibold text-danger">
                 {error}
