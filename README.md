@@ -18,17 +18,16 @@ The application was built to reduce dependence on scattered communication channe
 ## Application Screenshots
 
 ### Admin Dashboard
-![Admin Dashboard](screenshots/admin.png)
+![Admin Dashboard](./screenshots/admin.png)
 
 ### Attendance Management
-![Attendance Management](screenshots/Attendance%20Management.png)
+![Attendance Management](./screenshots/attendance-management.png)
 
 ### Login Page
-![Login Page](screenshots/login.png)
+![Login Page](./screenshots/login.png)
 
 ### Member Dashboard
-![Member Dashboard](screenshots/member%20dashboard.png)
-
+![Member Dashboard](./screenshots/member-dashboard.png)
 ## Key Features
 
 ### 1. Administrator Dashboard
