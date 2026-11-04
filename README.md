@@ -15,6 +15,20 @@ The platform provides two separate experiences:
 
 The application was built to reduce dependence on scattered communication channels, manual attendance records and disconnected administrative tools.
 
+## Application Screenshots
+
+### Admin Dashboard
+![Admin Dashboard](screenshots/admin.png)
+
+### Attendance Management
+![Attendance Management](screenshots/attendance%20Management.png)
+
+### Login Page
+![Login Page](screenshots/login.png)
+
+### Member Dashboard
+![Member Dashboard](screenshots/member%20dashboard.png)
+
 ## Key Features
 
 ### 1. Administrator Dashboard
