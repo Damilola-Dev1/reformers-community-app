@@ -21,7 +21,7 @@ The application was built to reduce dependence on scattered communication channe
 ![Admin Dashboard](screenshots/admin.png)
 
 ### Attendance Management
-![Attendance Management](screenshots/attendance%20Management.png)
+![Attendance Management](screenshots/Attendance%20Management.png)
 
 ### Login Page
 ![Login Page](screenshots/login.png)
